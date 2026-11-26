@@ -1,8 +1,10 @@
 import tkinter as tk
-from tkinter import ttk
+from pathlib import Path
+from tkinter import filedialog, messagebox, ttk
 from typing import Optional
 import time
 
+from coaster_storage import load_track, save_track
 from coaster_physics import (
     G,
     PRESETS,
@@ -30,10 +32,169 @@ class RollerCoasterApp:
         self.position = None
         self.failure = None
         self.animation_id = None
+        self.current_file = None
+        self.dirty = False
 
         self.configure_styles()
+        self.build_file_menu()
         self.build_ui()
         self.update_track()
+        self.update_window_title()
+        self.root.protocol("WM_DELETE_WINDOW", self.exit_app)
+
+    def build_file_menu(self):
+        self.menu_bar = tk.Menu(self.root)
+        self.file_menu = tk.Menu(self.menu_bar, tearoff=False)
+        self.file_menu.add_command(
+            label="New", accelerator="Ctrl+N", command=self.new_track
+        )
+        self.file_menu.add_command(
+            label="Open...", accelerator="Ctrl+O", command=self.open_track
+        )
+        self.file_menu.add_command(
+            label="Save", accelerator="Ctrl+S", command=self.save_current
+        )
+        self.file_menu.add_command(
+            label="Save As...", accelerator="Ctrl+Shift+S", command=self.save_as
+        )
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label="Exit", command=self.exit_app)
+        self.menu_bar.add_cascade(label="File", menu=self.file_menu)
+        self.root.configure(menu=self.menu_bar)
+
+        shortcuts = (
+            ("<Control-n>", self.new_track),
+            ("<Control-o>", self.open_track),
+            ("<Control-s>", self.save_current),
+            ("<Control-Shift-s>", self.save_as),
+        )
+        for sequence, command in shortcuts:
+            self.root.bind_all(
+                sequence,
+                lambda event, action=command: self.handle_shortcut(event, action),
+            )
+
+    def handle_shortcut(self, event, action):
+        action()
+        return "break"
+
+    def update_window_title(self):
+        title = "Roller Coaster Designer"
+        if self.current_file:
+            title += f" - {Path(self.current_file).name}"
+        if self.dirty:
+            title += " *"
+        self.root.title(title)
+
+    def mark_dirty(self):
+        self.dirty = True
+        self.update_window_title()
+
+    def confirm_save_changes(self, action):
+        if not self.dirty:
+            return True
+        answer = messagebox.askyesnocancel(
+            "Unsaved Changes",
+            f"Save changes before {action}?",
+            parent=self.root,
+        )
+        if answer is None:
+            return False
+        if answer:
+            return self.save_current()
+        return True
+
+    def new_track(self):
+        if not self.confirm_save_changes("creating a new track"):
+            return
+        self.points = [list(point) for point in PRESETS["Starter"]]
+        self.preset.set("Starter")
+        self.current_file = None
+        self.dirty = False
+        self.update_track()
+        self.status_label.configure(text="New track")
+        self.update_window_title()
+
+    def open_track(self):
+        if not self.confirm_save_changes("opening another track"):
+            return
+        filename = filedialog.askopenfilename(
+            parent=self.root,
+            title="Open Roller Coaster Track",
+            filetypes=(("Roller Coaster Track", "*.json"), ("All files", "*.*")),
+        )
+        if not filename:
+            return
+        try:
+            preset, points = load_track(filename)
+        except (OSError, ValueError) as error:
+            messagebox.showerror(
+                "Could Not Open Track",
+                f"The selected track could not be opened:\n{error}",
+                parent=self.root,
+            )
+            return
+
+        self.points = [list(point) for point in points]
+        self.preset.set(preset)
+        self.current_file = str(Path(filename))
+        self.dirty = False
+        self.update_track()
+        self.status_label.configure(text=f"Opened {Path(filename).name}")
+        self.update_window_title()
+
+    def save_current(self):
+        if not self.current_file:
+            return self.save_as()
+        try:
+            save_track(self.current_file, self.points, self.preset.get())
+        except (OSError, ValueError) as error:
+            messagebox.showerror(
+                "Could Not Save Track",
+                f"The track could not be saved:\n{error}",
+                parent=self.root,
+            )
+            return False
+        self.dirty = False
+        self.status_label.configure(text=f"Saved {Path(self.current_file).name}")
+        self.update_window_title()
+        return True
+
+    def save_as(self):
+        options = {
+            "parent": self.root,
+            "title": "Save Roller Coaster Track",
+            "defaultextension": ".json",
+            "filetypes": (("Roller Coaster Track", "*.json"), ("All files", "*.*")),
+            "initialfile": (
+                Path(self.current_file).name
+                if self.current_file
+                else "roller-coaster.json"
+            ),
+        }
+        if self.current_file:
+            options["initialdir"] = str(Path(self.current_file).parent)
+        filename = filedialog.asksaveasfilename(**options)
+        if not filename:
+            return False
+        try:
+            save_track(filename, self.points, self.preset.get())
+        except (OSError, ValueError) as error:
+            messagebox.showerror(
+                "Could Not Save Track",
+                f"The track could not be saved:\n{error}",
+                parent=self.root,
+            )
+            return False
+        self.current_file = str(Path(filename))
+        self.dirty = False
+        self.status_label.configure(text=f"Saved {Path(filename).name}")
+        self.update_window_title()
+        return True
+
+    def exit_app(self):
+        if self.confirm_save_changes("exiting"):
+            self.root.destroy()
 
     def configure_styles(self):
         style = ttk.Style(self.root)
@@ -172,6 +333,7 @@ class RollerCoasterApp:
         max_h = self.points[0][1] - 0.01 if index == 1 else 60
         self.points[index] = [clamp(x, min_x, max_x), clamp(y, min_h, max_h)]
         self.preset.set("Custom")
+        self.mark_dirty()
         self.update_track()
 
     def pointer_up(self, event):
@@ -182,6 +344,7 @@ class RollerCoasterApp:
         if name == "Custom":
             return
         self.points = [list(point) for point in PRESETS[name]]
+        self.mark_dirty()
         self.update_track()
 
     def add_point(self):
@@ -198,6 +361,7 @@ class RollerCoasterApp:
         x = segment["x0"] + u
         self.points.insert(widest_index + 1, [x, height])
         self.preset.set("Custom")
+        self.mark_dirty()
         self.update_track()
 
     def update_track(self):

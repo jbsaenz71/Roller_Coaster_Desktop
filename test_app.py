@@ -1,10 +1,13 @@
 import tkinter as tk
 import unittest
+import tempfile
 from types import SimpleNamespace
 from unittest.mock import patch
+from pathlib import Path
 
 from app import RollerCoasterApp
 from coaster_physics import PRESETS, first_load_failure
+from coaster_storage import load_track
 
 
 class RollerCoasterAppTests(unittest.TestCase):
@@ -173,6 +176,154 @@ class RollerCoasterAppTests(unittest.TestCase):
         self.assertEqual(app.status_label.cget("text"), "Ready to ride")
         self.assertEqual(app.position.offset, 0.0)
         self.assertEqual(app.failure_label.cget("text"), "")
+
+    def test_file_menu_has_file_actions_and_keyboard_shortcuts(self):
+        root, app = self.create_app()
+
+        labels = [
+            app.file_menu.entrycget(index, "label")
+            for index in range(app.file_menu.index("end") + 1)
+            if app.file_menu.type(index) != "separator"
+        ]
+        self.assertEqual(labels, ["New", "Open...", "Save", "Save As...", "Exit"])
+        for sequence in (
+            "<Control-n>",
+            "<Control-o>",
+            "<Control-s>",
+            "<Control-Shift-s>",
+        ):
+            with self.subTest(shortcut=sequence):
+                self.assertTrue(root.tk.call("bind", "all", sequence))
+
+    def test_save_as_and_open_restore_custom_track_and_reset_ride(self):
+        root, app = self.create_app()
+        app.add_point()
+        expected_points = [list(point) for point in app.points]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "custom.json"
+            with patch("app.filedialog.asksaveasfilename", return_value=str(path)):
+                self.assertTrue(app.save_as())
+
+            self.assertTrue(path.exists())
+            self.assertFalse(app.dirty)
+            self.assertIn("custom.json", root.title())
+
+            app.preset.set("Rollback hill")
+            app.preset_changed()
+            app.failure = app.profile["samples"][-1]
+            with patch("app.messagebox.askyesnocancel", return_value=False), patch(
+                "app.filedialog.askopenfilename", return_value=str(path)
+            ):
+                app.open_track()
+
+        self.assertEqual(app.preset.get(), "Custom")
+        self.assertEqual(app.points, expected_points)
+        self.assertIsNone(app.failure)
+        self.assertEqual(app.position.offset, 0.0)
+        self.assertFalse(app.dirty)
+        self.assertIn("Opened custom.json", app.status_label.cget("text"))
+
+    def test_save_updates_current_file_after_track_edit(self):
+        root, app = self.create_app()
+        app.add_point()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "track.json"
+            with patch("app.filedialog.asksaveasfilename", return_value=str(path)):
+                self.assertTrue(app.save_as())
+
+            app.points[1][1] += 0.5
+            expected_points = [tuple(point) for point in app.points]
+            app.mark_dirty()
+            self.assertTrue(app.save_current())
+
+            preset, saved_points = load_track(path)
+
+        self.assertEqual(preset, "Custom")
+        self.assertEqual(saved_points, expected_points)
+        self.assertFalse(app.dirty)
+        self.assertIn("track.json", root.title())
+
+    def test_new_resets_to_starter_and_clears_active_file(self):
+        root, app = self.create_app()
+        app.add_point()
+        app.current_file = "previous.json"
+        app.update_window_title()
+
+        with patch("app.messagebox.askyesnocancel", return_value=False):
+            app.new_track()
+
+        self.assertEqual(app.points, [list(point) for point in PRESETS["Starter"]])
+        self.assertEqual(app.preset.get(), "Starter")
+        self.assertIsNone(app.current_file)
+        self.assertFalse(app.dirty)
+        self.assertEqual(root.title(), "Roller Coaster Designer")
+
+    def test_cancelled_open_leaves_track_unchanged(self):
+        root, app = self.create_app()
+        app.add_point()
+        expected_points = [list(point) for point in app.points]
+
+        with patch("app.messagebox.askyesnocancel", return_value=False), patch(
+            "app.filedialog.askopenfilename", return_value=""
+        ):
+            app.open_track()
+
+        self.assertEqual(app.points, expected_points)
+        self.assertTrue(app.dirty)
+
+    def test_save_error_is_reported_and_leaves_track_dirty(self):
+        root, app = self.create_app()
+        app.add_point()
+        app.current_file = "track.json"
+
+        with patch("app.save_track", side_effect=OSError("disk unavailable")), patch(
+            "app.messagebox.showerror"
+        ) as show_error:
+            self.assertFalse(app.save_current())
+
+        self.assertTrue(app.dirty)
+        show_error.assert_called_once()
+
+    def test_cancelled_save_as_leaves_track_unsaved_and_unchanged(self):
+        root, app = self.create_app()
+        app.add_point()
+        expected_points = [list(point) for point in app.points]
+
+        with patch("app.filedialog.asksaveasfilename", return_value=""):
+            self.assertFalse(app.save_as())
+
+        self.assertEqual(app.points, expected_points)
+        self.assertTrue(app.dirty)
+        self.assertIsNone(app.current_file)
+
+    def test_malformed_open_reports_error_without_changing_track(self):
+        root, app = self.create_app()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "invalid.json"
+            path.write_text("{", encoding="utf-8")
+            expected_points = [list(point) for point in app.points]
+
+            with patch("app.filedialog.askopenfilename", return_value=str(path)), patch(
+                "app.messagebox.showerror"
+            ) as show_error:
+                app.open_track()
+
+        self.assertEqual(app.points, expected_points)
+        self.assertIsNone(app.current_file)
+        self.assertFalse(app.dirty)
+        show_error.assert_called_once()
+
+    def test_cancel_unsaved_changes_keeps_track_when_creating_new(self):
+        root, app = self.create_app()
+        app.add_point()
+        expected_points = [list(point) for point in app.points]
+
+        with patch("app.messagebox.askyesnocancel", return_value=None):
+            app.new_track()
+
+        self.assertEqual(app.points, expected_points)
+        self.assertTrue(app.dirty)
+        self.assertEqual(app.preset.get(), "Custom")
 
 
 if __name__ == "__main__":

@@ -67,6 +67,7 @@ The roller coaster simulator is a Tkinter desktop application rather than a brow
 - Place a menu tab labeled **File** in the top-left corner of the desktop window.
 - The **File** tab provides access to the file actions described below.
 - The save feature saves the current roller coaster track configuration, including control-point coordinates and the selected preset/custom state, in a versioned, documented JSON format.
+- Version 1 JSON files contain `schema_version` (integer `1`), `preset` (`Starter`, `Rollback hill`, `High-g valley`, `Low-g crest`, or `Custom`), and `points` (three or four `[x, height]` coordinate pairs in meters).
 - Saving must preserve the editable track for reopening or later use.
 - Saving must park the car at the start and clear any active failure marker when the saved configuration is restored.
 - Canceling a file dialog must leave the current track and ride state unchanged.
