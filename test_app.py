@@ -1,9 +1,10 @@
 import tkinter as tk
 import unittest
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from app import RollerCoasterApp
-from coaster_physics import PRESETS
+from coaster_physics import PRESETS, first_load_failure
 
 
 class RollerCoasterAppTests(unittest.TestCase):
@@ -90,6 +91,88 @@ class RollerCoasterAppTests(unittest.TestCase):
                 app.preset_changed()
                 self.assertEqual(app.points, [list(point) for point in points])
                 self.assertEqual(len(app.points), len(points))
+
+    def run_ride_to_completion(self, preset_name):
+        root, app = self.create_app()
+        app.preset.set(preset_name)
+        app.preset_changed()
+
+        callbacks = []
+        app.root.after = lambda delay, callback: callbacks.append(callback) or len(callbacks)
+        clock = [100.0]
+        samples = app.profile["samples"]
+        load_failure = first_load_failure(
+            [tuple(point) for point in app.points],
+            samples,
+        )
+        finish = samples[-1]
+        stop_time = (
+            load_failure[0].time
+            if load_failure
+            else (2 * finish.time if app.profile["outcome"] == "rollback" else finish.time)
+        )
+
+        with patch("app.time.monotonic", side_effect=lambda: clock[0]):
+            app.start_ride()
+            self.assertEqual(app.status_label.cget("text"), "Riding")
+            self.assertEqual(str(app.ride_button.cget("state")), "disabled")
+
+            callbacks.pop(0)()
+            clock[0] += 0.25
+            callbacks.pop(0)()
+            self.assertGreater(app.position.offset, 0)
+            self.assertGreater(app.position.speed_mph, 0)
+
+            clock[0] = 100.0 + stop_time + 0.1
+            callbacks.pop(0)()
+
+        self.assertEqual(str(app.ride_button.cget("state")), "normal")
+        self.assertIsNone(app.animation_id)
+        return app
+
+    def test_starter_ride_animates_and_completes(self):
+        app = self.run_ride_to_completion("Starter")
+
+        self.assertEqual(app.status_label.cget("text"), "Ride complete")
+        self.assertIsNone(app.failure)
+        self.assertAlmostEqual(app.position.offset, 30.0)
+
+    def test_rollback_ride_keeps_turning_point_failure_marker(self):
+        app = self.run_ride_to_completion("Rollback hill")
+
+        self.assertEqual(app.status_label.cget("text"), "Rolled back to the start")
+        self.assertIsNotNone(app.failure)
+        self.assertAlmostEqual(app.failure.offset, 40.0, delta=0.1)
+        self.assertAlmostEqual(app.failure.speed_mph, 0.0)
+        self.assertAlmostEqual(app.position.offset, 0.0)
+        self.assertIn("Car ran out of speed before the crest", app.failure_label.cget("text"))
+
+    def test_high_g_ride_stops_at_four_g_crossing(self):
+        app = self.run_ride_to_completion("High-g valley")
+
+        self.assertEqual(app.status_label.cget("text"), "Ride stopped")
+        self.assertIsNotNone(app.failure)
+        self.assertAlmostEqual(app.failure.load, 4.0, delta=0.01)
+        self.assertIn("Rider load crossed the 4 g limit", app.failure_label.cget("text"))
+
+    def test_low_g_ride_stops_at_negative_one_g_crossing(self):
+        app = self.run_ride_to_completion("Low-g crest")
+
+        self.assertEqual(app.status_label.cget("text"), "Ride stopped")
+        self.assertIsNotNone(app.failure)
+        self.assertAlmostEqual(app.failure.offset, 24.17, delta=0.05)
+        self.assertAlmostEqual(app.failure.load, -1.0, delta=0.01)
+        self.assertIn("Rider load crossed the -1 g limit", app.failure_label.cget("text"))
+
+    def test_reset_after_ride_clears_failure_and_returns_to_start(self):
+        app = self.run_ride_to_completion("High-g valley")
+
+        app.reset_ride()
+
+        self.assertIsNone(app.failure)
+        self.assertEqual(app.status_label.cget("text"), "Ready to ride")
+        self.assertEqual(app.position.offset, 0.0)
+        self.assertEqual(app.failure_label.cget("text"), "")
 
 
 if __name__ == "__main__":

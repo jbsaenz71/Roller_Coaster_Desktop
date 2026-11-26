@@ -61,3 +61,9 @@ Implemented Stage 2 by adding a labeled side-view grid and focused Tkinter tests
 > I cant confirm anything. Also, run another validation check
 
 Continued validation without requiring confirmation; the additional integration check passed.
+
+## 2026-11-25
+
+> Looks good. Build stage 3, and run another validation check.
+
+Added deterministic Tkinter animation tests for Starter completion, rollback, high-g stopping, low-g stopping, and Reset behavior. All 15 tests passed, modules compiled, and an independent preset check matched the spec: Starter 31.33 mph/2.00 g, rollback at 40.00 m/0.00 mph, high-g at 4.00 g, and low-g at 24.17 m/26.42 m track/26.33 mph/-1.00 g. No later-stage features were implemented.
