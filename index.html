@@ -1,0 +1,523 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roller Coaster Designer</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #101827; color: #f3f6fc; font: 1rem/1.5 system-ui, sans-serif; }
+  main { max-width: 1080px; margin: auto; padding: clamp(16px, 4vw, 48px); }
+  h1 { margin: 0; font-size: clamp(1.8rem, 5vw, 3rem); letter-spacing: -.04em; }
+  h2 { margin: 0 0 .75rem; font-size: 1.1rem; }
+  p { color: #bfcde2; margin: .5rem 0 1.5rem; }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(225px, .36fr); gap: 16px; }
+  section, aside { background: #182439; border: 1px solid #34455f; border-radius: 16px; padding: clamp(12px, 3vw, 24px); min-width: 0; }
+  .plots { margin-top: 16px; }
+  canvas { display: block; width: 100%; background: #111c2e; border-radius: 8px; }
+  #track { height: clamp(235px, 38vw, 390px); touch-action: none; cursor: grab; }
+  #track.dragging { cursor: grabbing; }
+  #failure-details { color: #ffb5b5; margin: .75rem 0 0; }
+  label { display: block; margin: 0 0 4px; }
+  select { width: 100%; min-height: 44px; margin-bottom: 12px; padding: 0 8px; border-radius: 8px; border: 1px solid #51627b; background: #263750; color: inherit; font: inherit; }
+  .plots canvas { height: 165px; }
+  .plots h2:not(:first-child) { margin-top: 1rem; }
+  .controls { display: flex; gap: 8px; }
+  button { min-height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid #51627b; background: #263750; color: #d5deeb; font: inherit; }
+  dl { margin: 1.25rem 0 0; }
+  dt { color: #bfcde2; }
+  dd { margin: 0 0 1rem; font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  dd:last-child { margin-bottom: 0; }
+  @media (max-width: 680px) { .layout { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Roller Coaster Designer</h1>
+  <p>Drag the control points to shape the track.</p>
+
+  <div class="layout">
+    <section aria-labelledby="track-title">
+      <h2 id="track-title">Track editor</h2>
+      <canvas id="track" aria-label="Side view of the track with draggable control points."></canvas>
+      <button id="add-point" type="button">Add fourth point</button>
+      <p id="failure-details" role="status" hidden></p>
+    </section>
+    <aside aria-labelledby="ride-title">
+      <h2 id="ride-title">Ride controls</h2>
+      <label for="preset">Track preset</label>
+      <select id="preset">
+        <option value="starter">Starter</option>
+        <option value="rollback">Rollback hill</option>
+        <option value="highG">High-g valley</option>
+        <option value="lowG">Low-g crest</option>
+        <option value="custom" disabled hidden>Custom</option>
+      </select>
+      <div class="controls">
+        <button id="ride" type="button">Ride</button>
+        <button id="reset" type="button">Reset</button>
+      </div>
+      <p id="ride-status" role="status">Ready to ride</p>
+      <dl>
+        <dt>Speed</dt>
+        <dd id="ride-speed">0.00 mph</dd>
+        <dt>Rider load</dt>
+        <dd id="start-load"></dd>
+        <dt>First valley</dt>
+        <dd id="valley-reading"></dd>
+      </dl>
+    </aside>
+  </div>
+
+  <section class="plots" aria-label="Track calculations">
+    <p>Plots cover the track the car can reach under gravity.</p>
+    <h2>Speed (mph)</h2>
+    <canvas id="speed" role="img" aria-label="Calculated speed in miles per hour versus distance along the track."></canvas>
+    <h2>Rider load (g)</h2>
+    <canvas id="load" role="img" aria-label="Calculated rider load versus distance along the track, with limits at positive 4 g and negative 1 g."></canvas>
+  </section>
+</main>
+<script>
+  const presets = {
+    starter: [[0, 10], [20, 0], [30, 2.5]],
+    rollback: [[0, 10], [20, 0], [45, 15.625]],
+    highG: [[0, 10], [10, 0], [15, 2.5]],
+    lowG: [[0, 10], [20, 2], [25, 3], [32, 1]]
+  };
+  const trackCanvas = document.getElementById('track');
+  const preset = document.getElementById('preset');
+  const rideButton = document.getElementById('ride');
+  const addPointButton = document.getElementById('add-point');
+  const rideStatus = document.getElementById('ride-status');
+  const failureDetails = document.getElementById('failure-details');
+  let points = presets.starter.map(point => [...point]);
+  let trackChart;
+  let drag;
+  let profile;
+  let position;
+  let animationFrame = null;
+  let failure;
+  const gravity = 9.81;
+  const mphPerMeterPerSecond = 2.23694;
+  const cyan = '#56e4df';
+  const amber = '#ffbd74';
+
+  function prepareChart(id, xMax, yMin, yMax, xTicks, yTicks, axisLabel) {
+    const canvas = document.getElementById(id);
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const density = window.devicePixelRatio || 1;
+    canvas.width = Math.round(width * density);
+    canvas.height = Math.round(height * density);
+    const ctx = canvas.getContext('2d');
+    ctx.scale(density, density);
+
+    const left = 42;
+    const right = width - 23;
+    const top = 16;
+    const bottom = height - 47;
+    const x = value => left + (right - left) * value / xMax;
+    const y = value => bottom - (bottom - top) * (value - yMin) / (yMax - yMin);
+    ctx.font = '13px system-ui';
+    ctx.fillStyle = '#bfcde2';
+    ctx.strokeStyle = '#34455f';
+    ctx.beginPath();
+    ctx.textAlign = 'right';
+    for (const tick of yTicks) {
+      ctx.moveTo(left, y(tick));
+      ctx.lineTo(right, y(tick));
+      ctx.fillText(tick, left - 8, y(tick) + 4);
+    }
+    ctx.textAlign = 'center';
+    for (const tick of xTicks) {
+      ctx.moveTo(x(tick), top);
+      ctx.lineTo(x(tick), bottom);
+      ctx.fillText(tick, x(tick), bottom + 17);
+    }
+    ctx.stroke();
+    ctx.fillText(axisLabel, (left + right) / 2, height - 8);
+    return { ctx, x, y };
+  }
+
+  function trackSlopes() {
+    return points.map(([x], i) => {
+      const first = clamp(i - 1, 0, points.length - 3);
+      const [[x0, h0], [x1, h1], [x2, h2]] = points.slice(first, first + 3);
+      const firstSlope = (h1 - h0) / (x1 - x0);
+      const secondSlope = (h2 - h1) / (x2 - x1);
+      return firstSlope + (secondSlope - firstSlope) / (x2 - x0) * (2 * x - x0 - x1);
+    });
+  }
+
+  function trackSegments() {
+    const slopes = trackSlopes();
+    return points.slice(0, -1).map(([x, height], i) => {
+      const [nextX, nextHeight] = points[i + 1];
+      const width = nextX - x;
+      const rise = nextHeight - height;
+      const slope = slopes[i];
+      const endSlope = slopes[i + 1];
+      const b = (3 * rise - width * (2 * slope + endSlope)) / width ** 2;
+      const c = (-2 * rise + width * (slope + endSlope)) / width ** 3;
+      return { offset: x - points[0][0], width, slope, endSlope, b, c,
+        heightAt: u => height + u * (slope + u * (b + u * c)),
+        slopeAt: u => slope + u * (2 * b + 3 * c * u) };
+    });
+  }
+
+  function readingAt(segment, offset) {
+    const u = offset - segment.offset;
+    const slope = segment.slopeAt(u);
+    const height = segment.heightAt(u);
+    const grade = Math.hypot(1, slope);
+    const speedSquared = 2 * gravity * Math.max(0, points[0][1] - height);
+    const speedMps = Math.sqrt(speedSquared);
+    return { segment, offset, slope, height, speedMps,
+      speed: speedMps * mphPerMeterPerSecond,
+      load: 1 / grade + speedSquared * (2 * segment.b + 6 * segment.c * u) / (gravity * grade ** 3) };
+  }
+
+  function stationaryPoints({ slope, b, c, width }) {
+    const discriminant = b * b - 3 * c * slope;
+    const roots = Math.abs(c) < 1e-14 ? [-slope / (2 * b)] : discriminant >= 0
+      ? [(-b - Math.sqrt(discriminant)) / (3 * c), (-b + Math.sqrt(discriminant)) / (3 * c)] : [];
+    return roots.filter(u => u > 0 && u < width).sort((a, b) => a - b);
+  }
+
+  function bisect(low, high, isPast) {
+    for (let step = 0; step < 40; step++) {
+      const midpoint = (low + high) / 2;
+      if (isPast(midpoint)) high = midpoint;
+      else low = midpoint;
+    }
+    return (low + high) / 2;
+  }
+
+  function calculateProfile() {
+    const segments = trackSegments();
+    const startHeight = points[0][1];
+    const samples = [];
+    let valley;
+    let outcome = 'complete';
+    for (const [index, segment] of segments.entries()) {
+      const { offset, width, heightAt, slopeAt } = segment;
+      const extrema = stationaryPoints(segment);
+      let extent = width;
+      if (index === 0 && segment.slope >= 0) {
+        extent = 0;
+        outcome = 'stall';
+      } else {
+        let previous = 0;
+        for (const u of [...extrema, width]) {
+          const difference = heightAt(u) - startHeight;
+          if (difference >= -1e-9) {
+            extent = difference > 1e-9 ? bisect(previous, u, value => heightAt(value) > startHeight) : u;
+            if (u !== width || extent < width || index < segments.length - 1 || Math.abs(slopeAt(extent)) < 1e-8) {
+              outcome = Math.abs(slopeAt(extent)) < 1e-8 ? 'stall' : 'rollback';
+            }
+            break;
+          }
+          previous = u;
+        }
+      }
+      const stops = extent === 0 ? [0] : [
+        ...Array.from({ length: 241 }, (_, i) => extent * i / 240),
+        ...extrema.filter(u => u < extent)
+      ].sort((a, b) => a - b).filter((u, i, sorted) => !i || u - sorted[i - 1] > 1e-11);
+      let previous = 0;
+      for (const u of stops) {
+        const reading = readingAt(segment, offset + u);
+        if (outcome !== 'complete' && extent > 0 && u === stops[stops.length - 1]) {
+          reading.speedMps = reading.speed = 0;
+        }
+        const last = samples[samples.length - 1];
+        const grade = at => Math.hypot(1, slopeAt(at));
+        const distance = (u - previous) / 6 * (grade(previous) + 4 * grade((previous + u) / 2) + grade(u));
+        reading.distance = (last?.distance ?? 0) + distance;
+        reading.time = (last?.time ?? 0) + (distance > 0 ? 2 * distance / (reading.speedMps + last.speedMps) : 0);
+        samples.push(reading);
+        if (!valley && u > 0 && Math.abs(reading.slope) < 1e-8 && 2 * segment.b + 6 * segment.c * u > 0) {
+          valley = reading;
+        }
+        previous = u;
+      }
+      if (outcome !== 'complete') break;
+    }
+    return { samples, outcome, valley };
+  }
+
+  function drawTrack() {
+    trackChart = prepareChart('track', 200, 0, 60,
+      [0, 50, 100, 150, 200], [0, 15, 30, 45, 60], 'Horizontal distance (m)');
+    const { ctx, x, y } = trackChart;
+    const slopes = trackSlopes();
+    const [startX, startHeight] = points[0];
+    ctx.strokeStyle = cyan;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(x(startX), y(startHeight));
+    for (let i = 0; i < points.length - 1; i++) {
+      const [x0, h0] = points[i];
+      const [x1, h1] = points[i + 1];
+      const span = (x1 - x0) / 3;
+      ctx.bezierCurveTo(x(x0 + span), y(h0 + slopes[i] * span),
+        x(x1 - span), y(h1 - slopes[i + 1] * span), x(x1), y(h1));
+    }
+    ctx.stroke();
+
+    for (const [position, height] of points) {
+      ctx.beginPath();
+      ctx.arc(x(position), y(height), 7, 0, 2 * Math.PI);
+      ctx.fillStyle = '#111c2e';
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+
+    const tangent = Math.atan2(y(position.height + position.slope) - y(position.height), x(1) - x(0));
+    ctx.save();
+    ctx.translate(x(startX + position.offset), y(position.height));
+    ctx.rotate(tangent);
+    ctx.fillStyle = amber;
+    ctx.fillRect(-11, -17, 22, 11);
+    ctx.fillStyle = '#f3f6fc';
+    for (const wheel of [-6, 6]) {
+      ctx.beginPath();
+      ctx.arc(wheel, -5, 2.5, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    if (failure) {
+      const markerX = x(startX + failure.offset);
+      const markerY = y(failure.height);
+      ctx.beginPath();
+      ctx.arc(markerX, markerY, 9, 0, 2 * Math.PI);
+      ctx.strokeStyle = '#ff8f91';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = '#ffb5b5';
+      ctx.textAlign = markerX > x(100) ? 'right' : 'left';
+      ctx.fillText('Failure', markerX + (markerX > x(100) ? -12 : 12), markerY - 10);
+    }
+  }
+
+  function pointerPosition(event) {
+    const bounds = trackCanvas.getBoundingClientRect();
+    return [event.clientX - bounds.left, event.clientY - bounds.top];
+  }
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  trackCanvas.addEventListener('pointerdown', event => {
+    if (drag || event.button !== 0) return;
+    const [pointerX, pointerY] = pointerPosition(event);
+    const { x, y } = trackChart;
+    const distances = points.map(([px, height]) => Math.hypot(pointerX - x(px), pointerY - y(height)));
+    const closest = Math.min(...distances);
+    if (closest > 22) return;
+    const index = distances.indexOf(closest);
+    const [px, height] = points[index];
+    drag = { index, pointerId: event.pointerId, offsetX: pointerX - x(px), offsetY: pointerY - y(height) };
+    trackCanvas.setPointerCapture(event.pointerId);
+    trackCanvas.classList.add('dragging');
+  });
+
+  trackCanvas.addEventListener('pointermove', event => {
+    if (drag?.pointerId !== event.pointerId) return;
+    const { index, offsetX, offsetY } = drag;
+    const [pointerX, pointerY] = pointerPosition(event);
+    const { x, y } = trackChart;
+    const minX = index === 0 ? 0 : points[index - 1][0] + 1;
+    const maxX = index === points.length - 1 ? 200 : points[index + 1][0] - 1;
+    const minHeight = index === 0 ? points[1][1] + 0.01 : 0;
+    const maxHeight = index === 1 ? points[0][1] - 0.01 : 60;
+    points[index] = [
+      clamp((pointerX - offsetX - x(0)) / (x(1) - x(0)), minX, maxX),
+      clamp((pointerY - offsetY - y(0)) / (y(1) - y(0)), minHeight, maxHeight)
+    ];
+    preset.value = 'custom';
+    updateTrack();
+  });
+
+  trackCanvas.addEventListener('lostpointercapture', event => {
+    if (drag?.pointerId !== event.pointerId) return;
+    drag = undefined;
+    trackCanvas.classList.remove('dragging');
+  });
+
+  preset.addEventListener('change', () => {
+    if (drag) trackCanvas.releasePointerCapture(drag.pointerId);
+    points = presets[preset.value].map(point => [...point]);
+    updateTrack();
+  });
+
+  addPointButton.addEventListener('click', () => {
+    if (points.length >= 4) return;
+    const segments = trackSegments();
+    const widest = segments[1].width > segments[0].width ? 1 : 0;
+    const segment = segments[widest];
+    if (segment.width < 2) return;
+    const midpoint = segment.width / 2;
+    const heightLimit = widest === 0 ? points[0][1] - 0.01 : 60;
+    points.splice(widest + 1, 0, [points[widest][0] + midpoint,
+      clamp(segment.heightAt(midpoint), 0, heightLimit)]);
+    preset.value = 'custom';
+    updateTrack();
+  });
+
+  function drawPlot(id, samples, field, xMax, xTicks, yMin, yMax, ticks, color, limits = []) {
+    const { ctx, x, y } = prepareChart(id, xMax, yMin, yMax,
+      xTicks, ticks, 'Distance along track (m)');
+    ctx.strokeStyle = '#ff8f91';
+    ctx.setLineDash([5, 4]);
+    for (const limit of limits) {
+      ctx.beginPath();
+      ctx.moveTo(x(0), y(limit));
+      ctx.lineTo(x(xMax), y(limit));
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(x(0), y(samples[0][field]));
+    for (const sample of samples.slice(1)) {
+      ctx.lineTo(x(sample.distance), y(sample[field]));
+    }
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = color;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(x(position.distance), y(position[field]), 4, 0, 2 * Math.PI);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+
+  function render() {
+    drawTrack();
+    const { samples, valley } = profile;
+    const distanceMax = Math.max(4, Math.ceil(samples[samples.length - 1].distance / 4) * 4);
+    const distanceTicks = [0, 1, 2, 3, 4].map(i => i * distanceMax / 4);
+    const speedMax = Math.ceil(Math.max(1, ...samples.map(sample => sample.speed)) / 5) * 5;
+    const loadMin = Math.min(-1, Math.floor(Math.min(...samples.map(sample => sample.load))));
+    const loadMax = Math.max(4, Math.ceil(Math.max(...samples.map(sample => sample.load))));
+    const loadTicks = [...new Set([loadMin, -1, 0, 4, loadMax])];
+    drawPlot('speed', samples, 'speed', distanceMax, distanceTicks, -speedMax / 20,
+      speedMax, [0, speedMax / 5, 2 * speedMax / 5, 3 * speedMax / 5, 4 * speedMax / 5, speedMax], cyan);
+    const loadPadding = (loadMax - loadMin) / 20;
+    drawPlot('load', samples, 'load', distanceMax, distanceTicks, loadMin - loadPadding,
+      loadMax + loadPadding, loadTicks, amber, [-1, 4]);
+    document.getElementById('ride-speed').textContent = position.speed.toFixed(2) + ' mph';
+    document.getElementById('start-load').textContent = position.load.toFixed(2) + ' g';
+    document.getElementById('valley-reading').textContent = valley
+      ? valley.speed.toFixed(2) + ' mph · ' + valley.load.toFixed(2) + ' g'
+      : 'No reachable valley';
+  }
+
+  function resetRide() {
+    if (animationFrame !== null) window.cancelAnimationFrame(animationFrame);
+    animationFrame = null;
+    failure = undefined;
+    failureDetails.hidden = true;
+    failureDetails.textContent = '';
+    position = profile.samples[0];
+    rideButton.disabled = false;
+    rideStatus.textContent = 'Ready to ride';
+    render();
+  }
+
+  function updateTrack() {
+    addPointButton.disabled = points.length >= 4 ||
+      Math.max(points[1][0] - points[0][0], points[2][0] - points[1][0]) < 2;
+    profile = calculateProfile();
+    resetRide();
+  }
+
+  function markFailure(reading, reason) {
+    failure = reading;
+    failureDetails.textContent = reason + ' · ' + reading.distance.toFixed(2) +
+      ' m along track · ' + reading.speed.toFixed(2) + ' mph · ' + reading.load.toFixed(2) + ' g';
+    failureDetails.hidden = false;
+  }
+
+  function firstLoadFailure({ samples }) {
+    for (let i = 0; i < samples.length; i++) {
+      const after = samples[i];
+      if (after.load >= -1 && after.load <= 4) continue;
+      const limit = after.load > 4 ? 4 : -1;
+      const reason = 'Rider load crossed the ' + limit + ' g limit';
+      const before = samples[i - 1];
+      if (!before || before.segment !== after.segment) return { ...after, reason };
+      const offset = bisect(before.offset, after.offset, value => {
+        const { load } = readingAt(after.segment, value);
+        return limit === 4 ? load > limit : load < limit;
+      });
+      const crossing = readingAt(after.segment, offset);
+      const fraction = (crossing.offset - before.offset) / (after.offset - before.offset);
+      const distance = before.distance + (after.distance - before.distance) * fraction;
+      const crossingSpeed = crossing.speedMps;
+      const partialTime = 2 * (distance - before.distance) / (before.speedMps + crossingSpeed);
+      return { ...crossing, reason, distance, time: before.time + partialTime };
+    }
+  }
+
+  function startRide() {
+    resetRide();
+    const { samples, outcome } = profile;
+    if (samples.length === 1) {
+      markFailure(samples[0], 'Car stalled at the start');
+      rideStatus.textContent = 'Ride stopped';
+      render();
+      return;
+    }
+    rideButton.disabled = true;
+    rideStatus.textContent = 'Riding';
+    const finish = samples[samples.length - 1];
+    const loadFailure = firstLoadFailure(profile);
+    const rollsBack = outcome === 'rollback' && !loadFailure;
+    const stopTime = loadFailure?.time ?? (rollsBack ? 2 * finish.time : finish.time);
+    let startedAt;
+    function advance(timestamp) {
+      startedAt ??= timestamp;
+      const elapsed = (timestamp - startedAt) / 1000;
+      const returning = rollsBack && elapsed >= finish.time;
+      if (returning && !failure) {
+        markFailure(finish, 'Car ran out of speed before the crest');
+        rideStatus.textContent = 'Rolling back';
+      }
+      if (elapsed >= stopTime) {
+        position = loadFailure ?? (rollsBack ? samples[0] : finish);
+        animationFrame = null;
+        rideButton.disabled = false;
+        if (loadFailure) markFailure(loadFailure, loadFailure.reason);
+        else if (outcome === 'stall') markFailure(finish, 'Car stalled at the crest');
+        rideStatus.textContent = failure ? (rollsBack ? 'Rolled back to the start' : 'Ride stopped') : 'Ride complete';
+      } else {
+        const travelTime = returning ? 2 * finish.time - elapsed : elapsed;
+        const segment = samples.findIndex(sample => sample.time >= travelTime && sample.time > 0);
+        const before = samples[segment - 1];
+        const after = samples[segment];
+        const fraction = (travelTime - before.time) / (after.time - before.time);
+        // Approximate acceleration as constant over each short sample interval.
+        const progress = fraction * (2 * before.speedMps +
+          (after.speedMps - before.speedMps) * fraction) / (before.speedMps + after.speedMps);
+        position = {
+          ...readingAt(after.segment, before.offset + (after.offset - before.offset) * progress),
+          distance: before.distance + (after.distance - before.distance) * progress
+        };
+        animationFrame = window.requestAnimationFrame(advance);
+      }
+      render();
+    }
+    animationFrame = window.requestAnimationFrame(advance);
+  }
+
+  rideButton.addEventListener('click', startRide);
+  document.getElementById('reset').addEventListener('click', resetRide);
+  updateTrack();
+  window.addEventListener('resize', render);
+</script>
+</body>
+</html>
