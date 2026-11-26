@@ -27,3 +27,9 @@ Updated AGENTS.md so the repository records each change-initiating user request 
 Added a `# Platform` section to spec.md with the Tkinter desktop implementation plan and the top-left `File` tab save-feature requirements. No application code or implementation behavior was changed.
 
 Removed a duplicate bare `# Platform` heading so the specification contains only the detailed Platform section.
+
+## 2026-11-25
+
+> The plan is looking very good. Any suggestions to make improvements? Don't build anything.
+
+Suggested improvements to the plan: define a versioned, documented JSON save format; add Open, Save, and Save As actions alongside a top-left File menu; distinguish preset, custom, and unsaved state; handle cancel, errors, malformed files, and unsaved-change confirmation; add keyboard shortcuts and accessibility; explicitly stage UI, physics, save/load, packaging, and validation; and set platform-specific packaging and test targets. No implementation was changed.
