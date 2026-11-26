@@ -79,3 +79,11 @@ Implemented Stage 4 File actions and persistence: New, Open, Save, Save As, Exit
 > looking good. Let's build stage 5 and run another validation check
 
 The repository contained no approved rider artwork, and the user selected `original_rider` instead of Mickey Mouse. Implemented Orbit, a distinct robot passenger drawn with in-app vector shapes, and updated the spec accordingly. No third-party character art was used. All 32 tests passed, modules compiled, and a live Tkinter smoke check verified the car advanced while Orbit stayed visually attached to it.
+
+## 2026-11-26
+
+> Looks good. Let's build stage 6
+
+Adding focused Stage 6 automated validation for Hermite geometry, parabola reproduction, exact rollback and low-g preset transitions, and the existing controls, physics, persistence, rider, and ride outcomes. Running the focused suite and app-level checks, then committing the stage.
+
+Implemented and validated Stage 6 by adding exact Starter parabola, rollback-turn, and low-g crest assertions. All 34 unit tests passed, every Python module compiled, and the Tkinter test suite validated controls, presets, ride outcomes, file actions, and Orbit rendering.
