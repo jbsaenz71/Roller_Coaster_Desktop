@@ -51,3 +51,13 @@ Added the Mickey Mouse rider plan under `# Look and feel` in spec.md. Documented
 > [[PLAN]] Okay, build stage 1. Run a validatoin check to ensure it is working.
 
 Strengthened the Stage 1 Tkinter desktop-shell validation with checks for the window title, Ready state, Starter points, reachable track, track canvas, both plots, and a minimum-size resize. No later stages or save/rider features were implemented.
+
+## 2026-11-25
+
+> Looks good. Build stage 2
+
+Implemented Stage 2 by adding a labeled side-view grid and focused Tkinter tests for constrained dragging, fourth-point insertion, preset replacement, and ride reset. The full 10-test suite passed, source compilation passed, and an independent integration check passed for grid rendering, all preset replacements, fourth-point interpolation, and canvas redraw. No later-stage features were implemented.
+
+> I cant confirm anything. Also, run another validation check
+
+Continued validation without requiring confirmation; the additional integration check passed.

@@ -11,6 +11,7 @@ from coaster_physics import (
     clamp,
     first_load_failure,
     reading_at,
+    segment_height,
     track_segments,
 )
 
@@ -192,7 +193,6 @@ class RollerCoasterApp:
         if segment["width"] < 2:
             return
         u = segment["width"] / 2
-        from coaster_physics import segment_height
         height_limit = self.points[0][1] - 0.01 if widest_index == 0 else 60
         height = clamp(segment_height(segment, u), 0, height_limit)
         x = segment["x0"] + u
@@ -246,8 +246,21 @@ class RollerCoasterApp:
         height = canvas.winfo_height()
         left, right, top, bottom, x_map, y_map = self.track_mapping(canvas)
 
-        canvas.create_line(left, bottom, right, bottom, fill="#34455f")
-        canvas.create_line(left, top, left, bottom, fill="#34455f")
+        for x_tick in (0, 50, 100, 150, 200):
+            px = x_map(x_tick)
+            canvas.create_line(px, top, px, bottom, fill="#263750", tags="grid")
+            canvas.create_text(px, bottom + 12, text=str(x_tick), anchor="n",
+                               fill="#bfcde2", tags="axis-label")
+        for height_tick in (0, 15, 30, 45, 60):
+            py = y_map(height_tick)
+            canvas.create_line(left, py, right, py, fill="#263750", tags="grid")
+            canvas.create_text(left - 7, py, text=str(height_tick), anchor="e",
+                               fill="#bfcde2", tags="axis-label")
+        canvas.create_text((left + right) / 2, height - 5,
+                           text="Horizontal distance (m)", anchor="s",
+                           fill="#bfcde2", tags="axis-label")
+        canvas.create_text(8, top, text="Height (m)", anchor="nw",
+                           fill="#bfcde2", tags="axis-label")
         canvas.create_line(*self.hermite_points(), fill="#56e4df", width=4, smooth=False)
 
         for x, h in self.points:
