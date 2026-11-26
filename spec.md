@@ -24,6 +24,7 @@ A 2D roller coaster simulator for students. Shape a track, release a car from re
 - Next to the marker, show the failure reason, distance measured along the track from the start (m), speed (mph), and signed rider load (g) at the failure point. Keep those values fixed if the car rolls back. Use plain-language reasons such as “Car ran out of speed before the crest” and “Rider load crossed the 4 g limit.” If the failure is reported at a continuous threshold crossing, show the load at that location rather than inventing a higher reading.
 - Live speed in mph and signed rider g-force in g.
 - Two plots sharing a distance-along-track axis in meters. Show speed in mph and g-force in g, with a moving position indicator and the g-force limits marked.
+- Keep plot tick labels readable at compact window sizes by reducing vertical-axis tick density when the plot height is limited.
 
 # Look and feel
 

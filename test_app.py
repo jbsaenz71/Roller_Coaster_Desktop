@@ -81,6 +81,22 @@ class RollerCoasterAppTests(unittest.TestCase):
         self.assertEqual(app.preset.get(), "Custom")
         self.assertEqual(str(app.add_point_button.cget("state")), "disabled")
 
+    def test_plot_y_tick_labels_adapt_to_short_canvas(self):
+        root, app = self.create_app()
+
+        with patch.object(app.speed_canvas, "winfo_height", return_value=60):
+            app.draw_plot(
+                app.speed_canvas,
+                "speed_mph",
+                "Speed (mph)",
+                lambda values: (0, 40),
+            )
+
+        tick_labels = app.speed_canvas.find_withtag("y-tick-label")
+        self.assertEqual(len(tick_labels), 2)
+        bounds = sorted(app.speed_canvas.bbox(item) for item in tick_labels)
+        self.assertGreaterEqual(bounds[1][1], bounds[0][3])
+
     def test_orbit_rider_is_drawn_and_moves_with_car(self):
         root, app = self.create_app()
         start_head = app.track_canvas.bbox("rider-head")

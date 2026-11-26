@@ -510,12 +510,16 @@ class RollerCoasterApp:
             return bottom - (bottom - top) * (value - y_min) / (y_max - y_min)
 
         canvas.create_text(left, 3, text=title, anchor="w", fill="#bfcde2")
-        for i in range(5):
-            value = y_min + (y_max - y_min) * i / 4
+        y_tick_count = max(2, min(5, (bottom - top) // 18 + 1))
+        for i in range(y_tick_count):
+            fraction = i / (y_tick_count - 1)
+            value = y_min + (y_max - y_min) * fraction
             y = y_map(value)
             canvas.create_line(left, y, right, y, fill="#34455f")
             canvas.create_text(left - 7, y, text=f"{value:.1f}", anchor="e",
-                               fill="#bfcde2")
+                               fill="#bfcde2", tags="y-tick-label")
+
+        for i in range(5):
             distance = distance_max * i / 4
             x = x_map(distance)
             canvas.create_line(x, top, x, bottom, fill="#34455f")

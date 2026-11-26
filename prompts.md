@@ -111,3 +111,11 @@ Identified that the horizontal "Height (m)" caption overlaps the top "60" y-axis
 > Let's do it.
 
 Rotated and centered the track height-axis caption in the left margin, and added a regression assertion that it stays clear of the top y-axis tick.
+
+## 2026-11-26
+
+> It also crammed here. This time make the changes and build it.
+
+Made plot y-axis tick density responsive to available canvas height, preserving the five distance-axis ticks. Added a compact-canvas regression test and documented the readability requirement in spec.md.
+
+The compact-canvas regression passed, all 35 tests passed, and the changed Python files compiled successfully.
