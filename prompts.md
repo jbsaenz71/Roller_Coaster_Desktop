@@ -151,3 +151,70 @@ All 36 tests passed; the tests confirm the 2:1 track-to-plot height ratio, fit a
 Adjusted the startup window height to the available screen size with reserved margin, and added checks that the full plot canvases fit inside the initial and minimum-size windows. Preserved the complete data ranges.
 
 On the 720 px test display, the app now opens at 560 px high with both plot canvases and all axis labels inside the visible window. All 36 tests passed and Python modules compiled successfully.
+
+## 2026-11-26
+
+> I love it. Do it
+
+Changed only the track editor canvas to a soft sky-blue background and added subtle vector clouds behind the grid and coaster. Darkened track-axis text and track strokes for contrast; kept plots and controls dark.
+
+All 36 tests passed and the Python application and test files compiled successfully.
+
+## 2026-11-26
+
+> Looks great. This is the last fix. Could you make it so this part of the graph is not so crammed? You have some empty space below it to use if you want to.
+
+Moved the track editor's horizontal-axis title below the distance tick labels within the canvas margin, avoiding the center-tick collision without consuming more editor space. Added a regression check for the title and tick-label spacing.
+
+All 36 tests passed and the application and test Python files compiled successfully.
+
+## 2026-11-26
+
+> I can't see the font in the dropdown box. Could you make it a black font?
+
+Changed the readonly preset dropdown to use black text on a light background, with explicit readonly-state styling.
+
+All 37 tests passed and the application and test Python files compiled successfully.
+
+## 2026-11-26
+
+> The app is done. Let's do two more things. Let's run another validation check, then run a hand calculation. Write the work you did in the hand calculation in prompts.md so that I can review it.
+
+> I can't confirm anything
+
+Ran the full application test suite: all 37 tests passed. Python compilation checks also passed.
+
+### Starter valley hand calculation
+
+For the Starter parabola,
+
+- \(h(x)=(x-20)^2/40\)
+- \(h'(x)=(x-20)/20\), so at \(x=20\text{ m}\), the tangent slope is 0 and \(\theta=0\).
+- \(h''(x)=1/20=0.05\text{ m}^{-1}\), so at the flat valley the signed curvature is \(\kappa=0.05\text{ m}^{-1}\) and the radius is \(R=1/\kappa=20\text{ m}\).
+- The car drops from \(h_0=10\text{ m}\) to \(h=0\text{ m}\), a 10 m drop.
+
+Using conservation of energy:
+
+\[
+v=\sqrt{2g(h_0-h)}
+ =\sqrt{2(9.81)(10)}
+ =\sqrt{196.2}
+ \approx14.0071\text{ m/s}.
+\]
+
+Convert to mph:
+
+\[
+14.0071\times2.23694\approx31.3331\text{ mph}\approx31.33\text{ mph}.
+\]
+
+At the flat valley, \(\cos\theta=1\). The signed rider load is:
+
+\[
+n=\cos\theta+\frac{v^2\kappa}{g}
+ =1+\frac{(196.2)(0.05)}{9.81}
+ =1+\frac{9.81}{9.81}
+ =2.00g.
+\]
+
+The implementation reports 31.3331 mph and 2.0000 g at the Starter valley, matching the hand calculation (31.33 mph and 2.00 g).

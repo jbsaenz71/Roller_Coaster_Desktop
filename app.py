@@ -25,7 +25,7 @@ class RollerCoasterApp:
         screen_width = root.winfo_screenwidth()
         screen_height = root.winfo_screenheight()
         self.window_width = min(1100, max(760, screen_width - 40))
-        self.window_height = min(620, max(480, screen_height - 160))
+        self.window_height = min(620, max(480, screen_height - 120))
         window_x = max(20, (screen_width - self.window_width) // 2)
         self.root.geometry(
             f"{self.window_width}x{self.window_height}+{window_x}+20"
@@ -213,8 +213,18 @@ class RollerCoasterApp:
         style.configure("Readout.TLabel", font=("Segoe UI", 14, "bold"), foreground="#f3f6fc")
         style.configure("TButton", padding=8)
         style.map("TButton", background=[("active", "#34455f")])
-        style.configure("TCombobox", fieldbackground="#263750", background="#263750",
-                        foreground="#f3f6fc", padding=5)
+        style.configure(
+            "TCombobox",
+            fieldbackground="#f3f6fc",
+            background="#f3f6fc",
+            foreground="#000000",
+            padding=5,
+        )
+        style.map(
+            "TCombobox",
+            fieldbackground=[("readonly", "#f3f6fc")],
+            foreground=[("readonly", "#000000")],
+        )
 
     def build_ui(self):
         outer = ttk.Frame(self.root, padding=20)
@@ -236,12 +246,18 @@ class RollerCoasterApp:
 
         editor = ttk.Frame(layout, padding=12)
         editor.grid(row=0, column=0, sticky="nsew", padx=(0, 8), pady=(0, 8))
-        ttk.Label(editor, text="Track editor", style="Title.TLabel").pack(anchor="w")
+        editor.columnconfigure(0, weight=1)
+        editor.rowconfigure(1, weight=1)
+        ttk.Label(
+            editor, text="Track editor", style="Title.TLabel"
+        ).grid(row=0, column=0, sticky="w")
         self.track_canvas = tk.Canvas(
-            editor, height=220, bg="#111c2e", highlightthickness=1,
-            highlightbackground="#34455f", cursor="hand2"
+            editor, height=220, bg="#9ed2f0", highlightthickness=1,
+            highlightbackground="#5e9ab8", cursor="hand2"
         )
-        self.track_canvas.pack(fill="both", expand=True, pady=(8, 8))
+        self.track_canvas.grid(
+            row=1, column=0, sticky="nsew", pady=(8, 8)
+        )
         self.track_canvas.bind("<Configure>", lambda event: self.render())
         self.track_canvas.bind("<Button-1>", self.pointer_down)
         self.track_canvas.bind("<B1-Motion>", self.pointer_move)
@@ -249,24 +265,24 @@ class RollerCoasterApp:
 
         self.add_point_button = ttk.Button(editor, text="Add fourth point",
                                            command=self.add_point)
-        self.add_point_button.pack(anchor="w")
+        self.add_point_button.grid(row=2, column=0, sticky="w")
         self.failure_label = tk.Label(
             editor, text="", fg="#ffb5b5", bg="#182439", justify="left",
             wraplength=650
         )
-        self.failure_label.pack(anchor="w", pady=(8, 0))
+        self.failure_label.grid(row=3, column=0, sticky="w", pady=(8, 0))
 
         controls = ttk.Frame(layout, padding=12)
         controls.grid(row=0, column=1, sticky="nsew", pady=(0, 8))
         ttk.Label(controls, text="Ride controls", style="Title.TLabel").pack(anchor="w")
         ttk.Label(controls, text="Track preset").pack(anchor="w", pady=(8, 3))
         self.preset = tk.StringVar(value="Starter")
-        preset_box = ttk.Combobox(
+        self.preset_box = ttk.Combobox(
             controls, textvariable=self.preset, state="readonly",
             values=["Starter", "Rollback hill", "High-g valley", "Low-g crest", "Custom"]
         )
-        preset_box.pack(fill="x")
-        preset_box.bind("<<ComboboxSelected>>", self.preset_changed)
+        self.preset_box.pack(fill="x")
+        self.preset_box.bind("<<ComboboxSelected>>", self.preset_changed)
 
         button_row = ttk.Frame(controls)
         button_row.pack(fill="x", pady=(8, 4))
@@ -362,7 +378,7 @@ class RollerCoasterApp:
         width = max(1, canvas.winfo_width())
         height = max(1, canvas.winfo_height())
         left, right = 45, width - 20
-        top, bottom = 15, height - 35
+        top, bottom = 15, height - 55
         return (
             left,
             right,
@@ -468,37 +484,56 @@ class RollerCoasterApp:
     def draw_track(self):
         canvas = self.track_canvas
         canvas.delete("all")
-        width = canvas.winfo_width()
         height = canvas.winfo_height()
         left, right, top, bottom, x_map, y_map = self.track_mapping(canvas)
 
+        cloud_scale = max(0.65, min(1.0, (right - left) / 800))
+        for x_fraction, y_fraction in ((0.15, 0.08), (0.49, 0.28), (0.76, 0.12)):
+            self.draw_cloud(
+                canvas,
+                left + (right - left) * x_fraction,
+                top + (bottom - top) * y_fraction,
+                cloud_scale,
+            )
+
         for x_tick in (0, 50, 100, 150, 200):
             px = x_map(x_tick)
-            canvas.create_line(px, top, px, bottom, fill="#263750", tags="grid")
+            canvas.create_line(px, top, px, bottom, fill="#79abc5", tags="grid")
             canvas.create_text(px, bottom + 12, text=str(x_tick), anchor="n",
-                               fill="#bfcde2", tags="axis-label")
+                               fill="#173c56", tags="axis-label")
         for height_tick in (0, 15, 30, 45, 60):
             py = y_map(height_tick)
-            canvas.create_line(left, py, right, py, fill="#263750", tags="grid")
+            canvas.create_line(left, py, right, py, fill="#79abc5", tags="grid")
             canvas.create_text(left - 7, py, text=str(height_tick), anchor="e",
-                               fill="#bfcde2", tags="axis-label")
-        canvas.create_text((left + right) / 2, height - 5,
-                           text="Horizontal distance (m)", anchor="s",
-                           fill="#bfcde2", tags="axis-label")
+                               fill="#173c56", tags="axis-label")
+        canvas.create_text(
+            (left + right) / 2,
+            height - 5,
+            text="Horizontal distance (m)",
+            anchor="s",
+            fill="#173c56",
+            tags=("axis-label", "horizontal-axis-title"),
+        )
         canvas.create_text(
             12,
             (top + bottom) / 2,
             text="Height (m)",
             angle=90,
-            fill="#bfcde2",
+            fill="#173c56",
             tags=("axis-label", "axis-title"),
         )
-        canvas.create_line(*self.hermite_points(), fill="#56e4df", width=4, smooth=False)
+        canvas.create_line(
+            *self.hermite_points(),
+            fill="#087f8b",
+            width=4,
+            smooth=False,
+            tags="track",
+        )
 
         for x, h in self.points:
             px, py = x_map(x), y_map(h)
             canvas.create_oval(px - 8, py - 8, px + 8, py + 8,
-                               fill="#111c2e", outline="#56e4df", width=3)
+                               fill="#f3f6fc", outline="#087f8b", width=3)
 
         if self.position:
             px = x_map(self.position.offset)
@@ -515,14 +550,32 @@ class RollerCoasterApp:
             px = x_map(self.failure.offset)
             py = y_map(self.failure.height)
             canvas.create_oval(px - 9, py - 9, px + 9, py + 9,
-                               outline="#ff8f91", width=3)
+                               outline="#b4233b", width=3)
             canvas.create_text(px + (12 if px < right - 80 else -12), py - 12,
                                text="Failure", anchor="w" if px < right - 80 else "e",
-                               fill="#ffb5b5")
+                               fill="#8f1d2c")
+
+    def draw_cloud(self, canvas, x, y, scale):
+        cloud_parts = (
+            (0, 13, 30, 34),
+            (15, 2, 48, 34),
+            (35, 7, 68, 34),
+            (52, 15, 82, 34),
+        )
+        for left, top, right, bottom in cloud_parts:
+            canvas.create_oval(
+                x + left * scale,
+                y + top * scale,
+                x + right * scale,
+                y + bottom * scale,
+                fill="#eaf7ff",
+                outline="",
+                tags="cloud",
+            )
 
     def draw_orbit_rider(self, canvas, x, y):
         canvas.create_line(
-            x, y - 29, x, y - 34, fill="#56e4df", width=2,
+            x, y - 29, x, y - 34, fill="#087f8b", width=2,
             tags=("rider", "rider-antenna"),
         )
         canvas.create_oval(
@@ -547,7 +600,7 @@ class RollerCoasterApp:
         )
         canvas.create_oval(
             x - 7, y - 30, x + 7, y - 16, fill="#56e4df",
-            outline="#c1fbff", width=2, tags=("rider", "rider-head"),
+            outline="#087f8b", width=2, tags=("rider", "rider-head"),
         )
         canvas.create_oval(
             x - 4, y - 25, x + 4, y - 20, fill="#182439",

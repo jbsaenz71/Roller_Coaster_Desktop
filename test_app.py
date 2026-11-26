@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 import unittest
 import tempfile
 from types import SimpleNamespace
@@ -23,7 +24,7 @@ class RollerCoasterAppTests(unittest.TestCase):
         root, app = self.create_app()
 
         self.assertEqual(root.title(), "Roller Coaster Designer")
-        expected_height = min(620, max(480, root.winfo_screenheight() - 160))
+        expected_height = min(620, max(480, root.winfo_screenheight() - 120))
         self.assertEqual(root.minsize(), (760, expected_height))
         self.assertEqual(root.winfo_height(), expected_height)
         window_bottom = root.winfo_rooty() + root.winfo_height()
@@ -40,8 +41,29 @@ class RollerCoasterAppTests(unittest.TestCase):
         self.assertGreater(len(app.track_canvas.find_all()), 0)
         self.assertGreater(len(app.speed_canvas.find_all()), 0)
         self.assertGreater(len(app.load_canvas.find_all()), 0)
+        self.assertEqual(app.track_canvas.cget("background"), "#9ed2f0")
+        self.assertEqual(app.speed_canvas.cget("background"), "#111c2e")
+        cloud_items = app.track_canvas.find_withtag("cloud")
+        grid_items = app.track_canvas.find_withtag("grid")
+        track_items = app.track_canvas.find_withtag("track")
+        self.assertGreater(len(cloud_items), 0)
+        self.assertLess(max(cloud_items), min(grid_items))
+        self.assertLess(max(grid_items), min(track_items))
         self.assertGreater(len(app.track_canvas.find_withtag("grid")), 0)
         self.assertGreater(len(app.track_canvas.find_withtag("axis-label")), 0)
+        horizontal_title = app.track_canvas.find_withtag(
+            "horizontal-axis-title"
+        )[0]
+        center_tick = next(
+            item
+            for item in app.track_canvas.find_withtag("axis-label")
+            if app.track_canvas.itemcget(item, "text") == "100"
+        )
+        self.assertGreater(
+            app.track_canvas.bbox(horizontal_title)[1],
+            app.track_canvas.bbox(center_tick)[3],
+        )
+        self.assertGreater(app.add_point_button.winfo_height(), 1)
         for canvas in (app.speed_canvas, app.load_canvas):
             self.assertLessEqual(
                 canvas.winfo_rooty() + canvas.winfo_height(),
@@ -161,6 +183,19 @@ class RollerCoasterAppTests(unittest.TestCase):
         self.assertEqual(len(tick_labels), 2)
         bounds = sorted(app.speed_canvas.bbox(item) for item in tick_labels)
         self.assertGreaterEqual(bounds[1][1], bounds[0][3])
+
+    def test_preset_dropdown_uses_black_text_on_light_background(self):
+        root, app = self.create_app()
+        style = ttk.Style(root)
+
+        self.assertEqual(
+            style.lookup("TCombobox", "foreground", state=("readonly",)),
+            "#000000",
+        )
+        self.assertEqual(
+            style.lookup("TCombobox", "fieldbackground", state=("readonly",)),
+            "#f3f6fc",
+        )
 
     def test_orbit_rider_is_drawn_and_moves_with_car(self):
         root, app = self.create_app()
