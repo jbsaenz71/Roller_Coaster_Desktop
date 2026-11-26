@@ -29,6 +29,7 @@ A 2D roller coaster simulator for students. Shape a track, release a car from re
 # Look and feel
 
 Open with the starter track visible and the car at the first point. Put the track editor above the plots, with the ride controls and live readouts beside the track on wide screens. On phones, stack the sections and make the control points large enough to drag by touch.
+- In the desktop layout, make the track editor about twice as tall as either plot. Keep the two plots side by side when there is enough width, and compact the ride controls so the full app fits in the initial window.
 
 ## Original rider
 

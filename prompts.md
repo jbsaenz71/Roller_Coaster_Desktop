@@ -135,3 +135,11 @@ All 36 tests passed and every Python source and test module compiled successfull
 Placed the speed and rider-load charts side by side at normal widths and made them stack responsively below the width breakpoint. Restored the minimum window height to 620 pixels and added tests for both layouts.
 
 All 36 tests passed and all application and test Python files compiled successfully.
+
+## 2026-11-26
+
+> I like it. Do it.
+
+Adjusted the initial window to 1100x680, set a 760x600 minimum, made the track editor about twice as tall as each plot, reduced plot canvas heights, and compacted the live ride readouts. Kept the plots side by side at wide sizes and retained the narrow-window stacked layout.
+
+All 36 tests passed; the tests confirm the 2:1 track-to-plot height ratio, fit at the minimum window size, and successful Python compilation.

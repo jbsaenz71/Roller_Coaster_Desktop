@@ -23,7 +23,7 @@ class RollerCoasterAppTests(unittest.TestCase):
         root, app = self.create_app()
 
         self.assertEqual(root.title(), "Roller Coaster Designer")
-        self.assertEqual(root.minsize(), (760, 620))
+        self.assertEqual(root.minsize(), (760, 600))
         self.assertEqual(app.status_label.cget("text"), "Ready to ride")
         self.assertEqual(app.preset.get(), "Starter")
         self.assertEqual(len(app.points), 3)
@@ -46,7 +46,7 @@ class RollerCoasterAppTests(unittest.TestCase):
         tick_bounds = app.track_canvas.bbox(top_tick)
         self.assertGreater(title_bounds[1], tick_bounds[3])
 
-        root.geometry("760x620")
+        root.geometry("760x600")
         root.update()
         app.render()
         root.update()
@@ -57,7 +57,13 @@ class RollerCoasterAppTests(unittest.TestCase):
 
     def test_plot_titles_are_outside_equal_height_canvases(self):
         root, app = self.create_app()
-        root.geometry("760x620")
+        self.assertAlmostEqual(
+            app.track_canvas.winfo_height() / app.speed_canvas.winfo_height(),
+            2.0,
+            delta=0.1,
+        )
+
+        root.geometry("760x600")
         root.update()
         app.render()
         root.update()
@@ -70,6 +76,15 @@ class RollerCoasterAppTests(unittest.TestCase):
         self.assertLessEqual(
             abs(app.speed_canvas.winfo_height() - app.load_canvas.winfo_height()),
             1,
+        )
+        window_bottom = root.winfo_rooty() + root.winfo_height()
+        self.assertLessEqual(
+            app.load_canvas.winfo_rooty() + app.load_canvas.winfo_height(),
+            window_bottom,
+        )
+        self.assertLessEqual(
+            app.valley_label.winfo_rooty() + app.valley_label.winfo_height(),
+            window_bottom,
         )
         for canvas in (app.speed_canvas, app.load_canvas):
             canvas_text = [

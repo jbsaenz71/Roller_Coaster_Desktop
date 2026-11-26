@@ -22,8 +22,8 @@ class RollerCoasterApp:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("Roller Coaster Designer")
-        self.root.geometry("1100x780")
-        self.root.minsize(760, 620)
+        self.root.geometry("1100x680")
+        self.root.minsize(760, 600)
         self.root.configure(bg="#101827")
 
         self.points = [list(point) for point in PRESETS["Starter"]]
@@ -203,7 +203,7 @@ class RollerCoasterApp:
         style.configure("TFrame", background="#182439")
         style.configure("TLabel", background="#182439", foreground="#bfcde2")
         style.configure("Title.TLabel", font=("Segoe UI", 11, "bold"), foreground="#f3f6fc")
-        style.configure("Readout.TLabel", font=("Segoe UI", 16, "bold"), foreground="#f3f6fc")
+        style.configure("Readout.TLabel", font=("Segoe UI", 14, "bold"), foreground="#f3f6fc")
         style.configure("TButton", padding=8)
         style.map("TButton", background=[("active", "#34455f")])
         style.configure("TCombobox", fieldbackground="#263750", background="#263750",
@@ -224,14 +224,14 @@ class RollerCoasterApp:
         layout.pack(fill="both", expand=True)
         layout.columnconfigure(0, weight=3)
         layout.columnconfigure(1, weight=1)
-        layout.rowconfigure(0, weight=3)
+        layout.rowconfigure(0, weight=5)
         layout.rowconfigure(1, weight=2)
 
         editor = ttk.Frame(layout, padding=12)
         editor.grid(row=0, column=0, sticky="nsew", padx=(0, 8), pady=(0, 8))
         ttk.Label(editor, text="Track editor", style="Title.TLabel").pack(anchor="w")
         self.track_canvas = tk.Canvas(
-            editor, height=350, bg="#111c2e", highlightthickness=1,
+            editor, height=220, bg="#111c2e", highlightthickness=1,
             highlightbackground="#34455f", cursor="hand2"
         )
         self.track_canvas.pack(fill="both", expand=True, pady=(8, 8))
@@ -252,7 +252,7 @@ class RollerCoasterApp:
         controls = ttk.Frame(layout, padding=12)
         controls.grid(row=0, column=1, sticky="nsew", pady=(0, 8))
         ttk.Label(controls, text="Ride controls", style="Title.TLabel").pack(anchor="w")
-        ttk.Label(controls, text="Track preset").pack(anchor="w", pady=(12, 4))
+        ttk.Label(controls, text="Track preset").pack(anchor="w", pady=(8, 3))
         self.preset = tk.StringVar(value="Starter")
         preset_box = ttk.Combobox(
             controls, textvariable=self.preset, state="readonly",
@@ -262,23 +262,23 @@ class RollerCoasterApp:
         preset_box.bind("<<ComboboxSelected>>", self.preset_changed)
 
         button_row = ttk.Frame(controls)
-        button_row.pack(fill="x", pady=(12, 8))
+        button_row.pack(fill="x", pady=(8, 4))
         self.ride_button = ttk.Button(button_row, text="Ride", command=self.start_ride)
         self.ride_button.pack(side="left", padx=(0, 6))
         ttk.Button(button_row, text="Reset", command=self.reset_ride).pack(side="left")
 
         self.status_label = ttk.Label(controls, text="Ready to ride")
-        self.status_label.pack(anchor="w", pady=(8, 12))
+        self.status_label.pack(anchor="w", pady=(6, 8))
 
-        ttk.Label(controls, text="Speed").pack(anchor="w")
-        self.speed_label = ttk.Label(controls, text="0.00 mph", style="Readout.TLabel")
-        self.speed_label.pack(anchor="w", pady=(0, 12))
-        ttk.Label(controls, text="Rider load").pack(anchor="w")
-        self.load_label = ttk.Label(controls, text="0.00 g", style="Readout.TLabel")
-        self.load_label.pack(anchor="w", pady=(0, 12))
-        ttk.Label(controls, text="First valley").pack(anchor="w")
-        self.valley_label = ttk.Label(controls, text="No reachable valley",
-                                      style="Readout.TLabel")
+        self.speed_label = ttk.Label(
+            controls, text="Speed: 0.00 mph", style="Readout.TLabel"
+        )
+        self.speed_label.pack(anchor="w", pady=(0, 4))
+        self.load_label = ttk.Label(
+            controls, text="Rider load: 0.00 g", style="Readout.TLabel"
+        )
+        self.load_label.pack(anchor="w", pady=(0, 4))
+        self.valley_label = ttk.Label(controls, text="First valley: unavailable")
         self.valley_label.pack(anchor="w")
 
         plots = ttk.Frame(layout, padding=12)
@@ -300,7 +300,7 @@ class RollerCoasterApp:
         self.speed_plot_title.grid(row=0, column=0, sticky="w", pady=(8, 2))
 
         self.speed_canvas = tk.Canvas(
-            self.speed_plot_frame, height=145, bg="#111c2e", highlightthickness=1,
+            self.speed_plot_frame, height=110, bg="#111c2e", highlightthickness=1,
             highlightbackground="#34455f"
         )
         self.speed_canvas.grid(row=1, column=0, sticky="nsew")
@@ -313,7 +313,7 @@ class RollerCoasterApp:
         )
         self.load_plot_title.grid(row=0, column=0, sticky="w", pady=(8, 2))
         self.load_canvas = tk.Canvas(
-            self.load_plot_frame, height=145, bg="#111c2e", highlightthickness=1,
+            self.load_plot_frame, height=110, bg="#111c2e", highlightthickness=1,
             highlightbackground="#34455f"
         )
         self.load_canvas.grid(row=1, column=0, sticky="nsew")
@@ -620,14 +620,18 @@ class RollerCoasterApp:
             lambda values: (load_min - padding, load_max + padding),
         )
         if self.position:
-            self.speed_label.configure(text=f"{self.position.speed_mph:.2f} mph")
-            self.load_label.configure(text=f"{self.position.load:.2f} g")
+            self.speed_label.configure(
+                text=f"Speed: {self.position.speed_mph:.2f} mph"
+            )
+            self.load_label.configure(
+                text=f"Rider load: {self.position.load:.2f} g"
+            )
         valley = self.profile["valley"]
         self.valley_label.configure(
             text=(
-                f"{valley.speed_mph:.2f} mph · {valley.load:.2f} g"
+                f"First valley: {valley.speed_mph:.2f} mph · {valley.load:.2f} g"
                 if valley
-                else "No reachable valley"
+                else "First valley: unavailable"
             )
         )
 
