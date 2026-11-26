@@ -23,7 +23,7 @@ class RollerCoasterAppTests(unittest.TestCase):
         root, app = self.create_app()
 
         self.assertEqual(root.title(), "Roller Coaster Designer")
-        self.assertEqual(root.minsize(), (760, 680))
+        self.assertEqual(root.minsize(), (760, 620))
         self.assertEqual(app.status_label.cget("text"), "Ready to ride")
         self.assertEqual(app.preset.get(), "Starter")
         self.assertEqual(len(app.points), 3)
@@ -57,13 +57,14 @@ class RollerCoasterAppTests(unittest.TestCase):
 
     def test_plot_titles_are_outside_equal_height_canvases(self):
         root, app = self.create_app()
-        root.geometry("760x680")
+        root.geometry("760x620")
         root.update()
         app.render()
         root.update()
 
         self.assertEqual(app.speed_plot_title.cget("text"), "Speed (mph)")
         self.assertEqual(app.load_plot_title.cget("text"), "Rider load (g)")
+        self.assertEqual(app.plot_layout, "side-by-side")
         self.assertGreaterEqual(app.speed_canvas.winfo_height(), 90)
         self.assertGreaterEqual(app.load_canvas.winfo_height(), 90)
         self.assertLessEqual(
@@ -78,6 +79,11 @@ class RollerCoasterAppTests(unittest.TestCase):
             ]
             self.assertNotIn("Speed (mph)", canvas_text)
             self.assertNotIn("Rider load (g)", canvas_text)
+
+        app.update_plot_layout(SimpleNamespace(width=600))
+        self.assertEqual(app.plot_layout, "stacked")
+        self.assertEqual(int(app.speed_plot_frame.grid_info()["row"]), 1)
+        self.assertEqual(int(app.load_plot_frame.grid_info()["row"]), 2)
 
     def test_dragging_control_point_obeys_track_constraints(self):
         root, app = self.create_app()

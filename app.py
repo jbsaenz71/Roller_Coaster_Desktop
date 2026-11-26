@@ -23,7 +23,7 @@ class RollerCoasterApp:
         self.root = root
         self.root.title("Roller Coaster Designer")
         self.root.geometry("1100x780")
-        self.root.minsize(760, 680)
+        self.root.minsize(760, 620)
         self.root.configure(bg="#101827")
 
         self.points = [list(point) for point in PRESETS["Starter"]]
@@ -224,8 +224,8 @@ class RollerCoasterApp:
         layout.pack(fill="both", expand=True)
         layout.columnconfigure(0, weight=3)
         layout.columnconfigure(1, weight=1)
-        layout.rowconfigure(0, weight=1)
-        layout.rowconfigure(1, weight=1)
+        layout.rowconfigure(0, weight=3)
+        layout.rowconfigure(1, weight=2)
 
         editor = ttk.Frame(layout, padding=12)
         editor.grid(row=0, column=0, sticky="nsew", padx=(0, 8), pady=(0, 8))
@@ -284,30 +284,72 @@ class RollerCoasterApp:
         plots = ttk.Frame(layout, padding=12)
         plots.grid(row=1, column=0, columnspan=2, sticky="nsew")
         plots.columnconfigure(0, weight=1)
-        plots.rowconfigure(2, weight=1, minsize=100)
-        plots.rowconfigure(4, weight=1, minsize=100)
+        plots.columnconfigure(1, weight=1)
+        plots.rowconfigure(1, weight=1)
+        plots.rowconfigure(2, weight=1)
         ttk.Label(
             plots, text="Track calculations", style="Title.TLabel"
-        ).grid(row=0, column=0, sticky="w")
+        ).grid(row=0, column=0, columnspan=2, sticky="w")
+
+        self.speed_plot_frame = ttk.Frame(plots)
+        self.speed_plot_frame.columnconfigure(0, weight=1)
+        self.speed_plot_frame.rowconfigure(1, weight=1, minsize=90)
         self.speed_plot_title = ttk.Label(
-            plots, text="Speed (mph)", style="Title.TLabel"
+            self.speed_plot_frame, text="Speed (mph)", style="Title.TLabel"
         )
-        self.speed_plot_title.grid(row=1, column=0, sticky="w", pady=(8, 2))
+        self.speed_plot_title.grid(row=0, column=0, sticky="w", pady=(8, 2))
 
         self.speed_canvas = tk.Canvas(
-            plots, height=145, bg="#111c2e", highlightthickness=1,
+            self.speed_plot_frame, height=145, bg="#111c2e", highlightthickness=1,
             highlightbackground="#34455f"
         )
-        self.speed_canvas.grid(row=2, column=0, sticky="nsew")
+        self.speed_canvas.grid(row=1, column=0, sticky="nsew")
+
+        self.load_plot_frame = ttk.Frame(plots)
+        self.load_plot_frame.columnconfigure(0, weight=1)
+        self.load_plot_frame.rowconfigure(1, weight=1, minsize=90)
         self.load_plot_title = ttk.Label(
-            plots, text="Rider load (g)", style="Title.TLabel"
+            self.load_plot_frame, text="Rider load (g)", style="Title.TLabel"
         )
-        self.load_plot_title.grid(row=3, column=0, sticky="w", pady=(0, 2))
+        self.load_plot_title.grid(row=0, column=0, sticky="w", pady=(8, 2))
         self.load_canvas = tk.Canvas(
-            plots, height=145, bg="#111c2e", highlightthickness=1,
+            self.load_plot_frame, height=145, bg="#111c2e", highlightthickness=1,
             highlightbackground="#34455f"
         )
-        self.load_canvas.grid(row=4, column=0, sticky="nsew")
+        self.load_canvas.grid(row=1, column=0, sticky="nsew")
+
+        self.plots = plots
+        self.plot_layout = None
+        self.plots.bind("<Configure>", self.update_plot_layout)
+        self.update_plot_layout()
+
+    def update_plot_layout(self, event=None):
+        width = event.width if event is not None else self.plots.winfo_width()
+        layout = "side-by-side" if width >= 650 else "stacked"
+        if layout == self.plot_layout:
+            return
+
+        self.speed_plot_frame.grid_forget()
+        self.load_plot_frame.grid_forget()
+        if layout == "side-by-side":
+            self.plots.rowconfigure(1, weight=1, minsize=0)
+            self.plots.rowconfigure(2, weight=0, minsize=0)
+            self.speed_plot_frame.grid(
+                row=1, column=0, sticky="nsew", padx=(0, 6)
+            )
+            self.load_plot_frame.grid(
+                row=1, column=1, sticky="nsew", padx=(6, 0)
+            )
+        else:
+            self.plots.rowconfigure(1, weight=1, minsize=90)
+            self.plots.rowconfigure(2, weight=1, minsize=90)
+            self.speed_plot_frame.grid(
+                row=1, column=0, columnspan=2, sticky="nsew", pady=(0, 8)
+            )
+            self.load_plot_frame.grid(
+                row=2, column=0, columnspan=2, sticky="nsew"
+            )
+        self.plot_layout = layout
 
     def track_mapping(self, canvas):
         width = max(1, canvas.winfo_width())

@@ -127,3 +127,11 @@ The compact-canvas regression passed, all 35 tests passed, and the changed Pytho
 Moved each plot title into a separate label above its chart, allocated equal vertical space to both plot canvases, and increased the minimum window height to preserve usable plot space. Added regression checks for title placement, balanced plot heights, and minimum plot height.
 
 All 36 tests passed and every Python source and test module compiled successfully.
+
+## 2026-11-26
+
+> Let's make it
+
+Placed the speed and rider-load charts side by side at normal widths and made them stack responsively below the width breakpoint. Restored the minimum window height to 620 pixels and added tests for both layouts.
+
+All 36 tests passed and all application and test Python files compiled successfully.
