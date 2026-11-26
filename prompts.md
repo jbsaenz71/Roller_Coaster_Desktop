@@ -19,3 +19,9 @@ Ran a complete validation test. All 6 unit tests passed, every Python file compi
 > In the prompts.md file, ensure that what I write to initiate changes is recorded. Keep what you have written and continue to write summaries of the changes you make
 
 Updated AGENTS.md so the repository records each change-initiating user request verbatim and also appends summaries of changes. Preserved all existing prompt history and updated prompts.md with this request.
+
+## 2026-11-25
+
+> Now put that plan you made under the # Platform section in the spec.md file so that I can review it.
+
+Added a `# Platform` section to spec.md with the Tkinter desktop implementation plan and the top-left `File` tab save-feature requirements. No application code or implementation behavior was changed.

@@ -2,6 +2,8 @@
 
 A 2D roller coaster simulator for students. Shape a track, release a car from rest at the top of the first hill, and see how speed and rider g-force change during the ride.
 
+# Platform
+
 # Inputs
 
 - Drag the control points on a side-view grid to shape the track. Point coordinates are horizontal distance (x) from 0 to 200 m and height (h) from 0 to 60 m. Keep the points in left-to-right order with at least 1 m between them. The first point starts the ride and must be higher than the second point.
@@ -39,6 +41,29 @@ Use the default points ((0,10)), ((20,0)), and ((30,2.5)) in meters. They lie on
 - **Rollback hill.** The curve returns to the starting height of 10 m at a horizontal position of 40 m. Check that the marker reports 0.00 mph there and that the marker and its readings stay in place as the car rolls back.
 - **High-g valley.** The drop is 10 m and the valley radius is 5 m, so the predicted load at the valley is 1 + 20/5 = 5.00 g. Check that the car stops at the first 4 g crossing before the valley and that the marker gives the reason, distance, speed, and rider load. Switch back to **Starter** and check that the marker clears.
 - **Low-g crest.** The car should stop on the climb to the crest at approximately 24.17 m horizontally from the start (26.42 m along the track). Expect 26.33 mph and −1.00 g at the crossing. Check that Reset clears the marker.
+
+# Platform
+
+The roller coaster simulator is a Tkinter desktop application rather than a browser application.
+
+## Implementation plan
+
+1. Review the existing simulator specification and browser implementation to preserve track editing, presets, physics, readouts, plots, and failure behavior.
+2. Initialize or confirm Git repository state and retain the repository requirement that each plan or change is committed.
+3. Implement the Tkinter application in staged changes, keeping each logical stage as a separate commit.
+4. Convert the track editor to desktop controls, including drag editing and the four-point/preset behavior described in this specification.
+5. Reproduce the gravity-driven ride, live readouts, plots, rollback behavior, g-force failures, and Reset behavior in the Tkinter interface.
+6. Add focused automated checks for geometry, physics, controls, presets, and ride outcomes.
+7. Run the test suite and app-level validation, compare required preset values with the specification, verify the Git history, and confirm a clean working tree.
+
+## Save feature
+
+- Place a menu tab labeled **File** in the top-left corner of the desktop window.
+- The **File** tab provides access to the save feature.
+- The save feature saves the current roller coaster track configuration, including control-point coordinates and the selected preset/custom state.
+- Saving must preserve the editable track for reopening or later use.
+- Saving must park the car at the start and clear any active failure marker when the saved configuration is restored.
+- The save interaction and file format will be defined in a later implementation plan before coding begins.
 
 # Out of scope
 
