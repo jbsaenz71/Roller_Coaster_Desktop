@@ -45,3 +45,9 @@ Added detailed File actions and Validation sections under `# Platform` in spec.m
 > Now add the plan to the # Look and feel section of spec.md.
 
 Added the Mickey Mouse rider plan under `# Look and feel` in spec.md. Documented the character as seated in the car, continuously visible across ride states, visually attached during motion, and dependent on approved project artwork with appropriate rights. No application code or artwork was changed.
+
+## 2026-11-25
+
+> [[PLAN]] Okay, build stage 1. Run a validatoin check to ensure it is working.
+
+Strengthened the Stage 1 Tkinter desktop-shell validation with checks for the window title, Ready state, Starter points, reachable track, track canvas, both plots, and a minimum-size resize. No later stages or save/rider features were implemented.
