@@ -23,7 +23,7 @@ class RollerCoasterApp:
         self.root = root
         self.root.title("Roller Coaster Designer")
         self.root.geometry("1100x780")
-        self.root.minsize(760, 620)
+        self.root.minsize(760, 680)
         self.root.configure(bg="#101827")
 
         self.points = [list(point) for point in PRESETS["Starter"]]
@@ -224,8 +224,8 @@ class RollerCoasterApp:
         layout.pack(fill="both", expand=True)
         layout.columnconfigure(0, weight=3)
         layout.columnconfigure(1, weight=1)
-        layout.rowconfigure(0, weight=3)
-        layout.rowconfigure(1, weight=2)
+        layout.rowconfigure(0, weight=1)
+        layout.rowconfigure(1, weight=1)
 
         editor = ttk.Frame(layout, padding=12)
         editor.grid(row=0, column=0, sticky="nsew", padx=(0, 8), pady=(0, 8))
@@ -283,18 +283,31 @@ class RollerCoasterApp:
 
         plots = ttk.Frame(layout, padding=12)
         plots.grid(row=1, column=0, columnspan=2, sticky="nsew")
-        ttk.Label(plots, text="Track calculations", style="Title.TLabel").pack(anchor="w")
+        plots.columnconfigure(0, weight=1)
+        plots.rowconfigure(2, weight=1, minsize=100)
+        plots.rowconfigure(4, weight=1, minsize=100)
+        ttk.Label(
+            plots, text="Track calculations", style="Title.TLabel"
+        ).grid(row=0, column=0, sticky="w")
+        self.speed_plot_title = ttk.Label(
+            plots, text="Speed (mph)", style="Title.TLabel"
+        )
+        self.speed_plot_title.grid(row=1, column=0, sticky="w", pady=(8, 2))
 
         self.speed_canvas = tk.Canvas(
             plots, height=145, bg="#111c2e", highlightthickness=1,
             highlightbackground="#34455f"
         )
-        self.speed_canvas.pack(fill="both", expand=True, pady=(8, 4))
+        self.speed_canvas.grid(row=2, column=0, sticky="nsew")
+        self.load_plot_title = ttk.Label(
+            plots, text="Rider load (g)", style="Title.TLabel"
+        )
+        self.load_plot_title.grid(row=3, column=0, sticky="w", pady=(0, 2))
         self.load_canvas = tk.Canvas(
             plots, height=145, bg="#111c2e", highlightthickness=1,
             highlightbackground="#34455f"
         )
-        self.load_canvas.pack(fill="both", expand=True)
+        self.load_canvas.grid(row=4, column=0, sticky="nsew")
 
     def track_mapping(self, canvas):
         width = max(1, canvas.winfo_width())
@@ -492,7 +505,7 @@ class RollerCoasterApp:
             outline="#bfcde2", tags=("rider", "rider-visor"),
         )
 
-    def draw_plot(self, canvas, field, title, y_limits):
+    def draw_plot(self, canvas, field, y_limits):
         canvas.delete("all")
         width = max(1, canvas.winfo_width())
         height = max(1, canvas.winfo_height())
@@ -509,7 +522,6 @@ class RollerCoasterApp:
         def y_map(value):
             return bottom - (bottom - top) * (value - y_min) / (y_max - y_min)
 
-        canvas.create_text(left, 3, text=title, anchor="w", fill="#bfcde2")
         y_tick_count = max(2, min(5, (bottom - top) // 18 + 1))
         for i in range(y_tick_count):
             fraction = i / (y_tick_count - 1)
@@ -554,7 +566,6 @@ class RollerCoasterApp:
         self.draw_plot(
             self.speed_canvas,
             "speed_mph",
-            "Speed (mph)",
             lambda values: (0, max(5.0, speed_max)),
         )
         load_values = [sample.load for sample in samples]
@@ -564,7 +575,6 @@ class RollerCoasterApp:
         self.draw_plot(
             self.load_canvas,
             "load",
-            "Rider load (g)",
             lambda values: (load_min - padding, load_max + padding),
         )
         if self.position:

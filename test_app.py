@@ -23,6 +23,7 @@ class RollerCoasterAppTests(unittest.TestCase):
         root, app = self.create_app()
 
         self.assertEqual(root.title(), "Roller Coaster Designer")
+        self.assertEqual(root.minsize(), (760, 680))
         self.assertEqual(app.status_label.cget("text"), "Ready to ride")
         self.assertEqual(app.preset.get(), "Starter")
         self.assertEqual(len(app.points), 3)
@@ -53,6 +54,30 @@ class RollerCoasterAppTests(unittest.TestCase):
         self.assertGreater(app.track_canvas.winfo_height(), 0)
         self.assertGreater(app.speed_canvas.winfo_width(), 0)
         self.assertGreater(app.load_canvas.winfo_width(), 0)
+
+    def test_plot_titles_are_outside_equal_height_canvases(self):
+        root, app = self.create_app()
+        root.geometry("760x680")
+        root.update()
+        app.render()
+        root.update()
+
+        self.assertEqual(app.speed_plot_title.cget("text"), "Speed (mph)")
+        self.assertEqual(app.load_plot_title.cget("text"), "Rider load (g)")
+        self.assertGreaterEqual(app.speed_canvas.winfo_height(), 90)
+        self.assertGreaterEqual(app.load_canvas.winfo_height(), 90)
+        self.assertLessEqual(
+            abs(app.speed_canvas.winfo_height() - app.load_canvas.winfo_height()),
+            1,
+        )
+        for canvas in (app.speed_canvas, app.load_canvas):
+            canvas_text = [
+                canvas.itemcget(item, "text")
+                for item in canvas.find_all()
+                if canvas.type(item) == "text"
+            ]
+            self.assertNotIn("Speed (mph)", canvas_text)
+            self.assertNotIn("Rider load (g)", canvas_text)
 
     def test_dragging_control_point_obeys_track_constraints(self):
         root, app = self.create_app()
@@ -88,7 +113,6 @@ class RollerCoasterAppTests(unittest.TestCase):
             app.draw_plot(
                 app.speed_canvas,
                 "speed_mph",
-                "Speed (mph)",
                 lambda values: (0, 40),
             )
 

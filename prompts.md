@@ -119,3 +119,11 @@ Rotated and centered the track height-axis caption in the left margin, and added
 Made plot y-axis tick density responsive to available canvas height, preserving the five distance-axis ticks. Added a compact-canvas regression test and documented the readability requirement in spec.md.
 
 The compact-canvas regression passed, all 35 tests passed, and the changed Python files compiled successfully.
+
+## 2026-11-26
+
+> Make those changes.
+
+Moved each plot title into a separate label above its chart, allocated equal vertical space to both plot canvases, and increased the minimum window height to preserve usable plot space. Added regression checks for title placement, balanced plot heights, and minimum plot height.
+
+All 36 tests passed and every Python source and test module compiled successfully.
