@@ -22,8 +22,15 @@ class RollerCoasterApp:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("Roller Coaster Designer")
-        self.root.geometry("1100x680")
-        self.root.minsize(760, 600)
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        self.window_width = min(1100, max(760, screen_width - 40))
+        self.window_height = min(620, max(480, screen_height - 160))
+        window_x = max(20, (screen_width - self.window_width) // 2)
+        self.root.geometry(
+            f"{self.window_width}x{self.window_height}+{window_x}+20"
+        )
+        self.root.minsize(min(760, self.window_width), self.window_height)
         self.root.configure(bg="#101827")
 
         self.points = [list(point) for point in PRESETS["Starter"]]

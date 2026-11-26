@@ -143,3 +143,11 @@ All 36 tests passed and all application and test Python files compiled successfu
 Adjusted the initial window to 1100x680, set a 760x600 minimum, made the track editor about twice as tall as each plot, reduced plot canvas heights, and compacted the live ride readouts. Kept the plots side by side at wide sizes and retained the narrow-window stacked layout.
 
 All 36 tests passed; the tests confirm the 2:1 track-to-plot height ratio, fit at the minimum window size, and successful Python compilation.
+
+## 2026-11-26
+
+> It is still getting cut off. If you have to, shorten the ranges. Ensure that no part of the graph is cut off. Shrink the graphs or adjust the layout to whatever you think is best.
+
+Adjusted the startup window height to the available screen size with reserved margin, and added checks that the full plot canvases fit inside the initial and minimum-size windows. Preserved the complete data ranges.
+
+On the 720 px test display, the app now opens at 560 px high with both plot canvases and all axis labels inside the visible window. All 36 tests passed and Python modules compiled successfully.

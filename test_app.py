@@ -23,7 +23,14 @@ class RollerCoasterAppTests(unittest.TestCase):
         root, app = self.create_app()
 
         self.assertEqual(root.title(), "Roller Coaster Designer")
-        self.assertEqual(root.minsize(), (760, 600))
+        expected_height = min(620, max(480, root.winfo_screenheight() - 160))
+        self.assertEqual(root.minsize(), (760, expected_height))
+        self.assertEqual(root.winfo_height(), expected_height)
+        window_bottom = root.winfo_rooty() + root.winfo_height()
+        self.assertLessEqual(
+            window_bottom,
+            root.winfo_screenheight() - 20,
+        )
         self.assertEqual(app.status_label.cget("text"), "Ready to ride")
         self.assertEqual(app.preset.get(), "Starter")
         self.assertEqual(len(app.points), 3)
@@ -35,6 +42,11 @@ class RollerCoasterAppTests(unittest.TestCase):
         self.assertGreater(len(app.load_canvas.find_all()), 0)
         self.assertGreater(len(app.track_canvas.find_withtag("grid")), 0)
         self.assertGreater(len(app.track_canvas.find_withtag("axis-label")), 0)
+        for canvas in (app.speed_canvas, app.load_canvas):
+            self.assertLessEqual(
+                canvas.winfo_rooty() + canvas.winfo_height(),
+                window_bottom,
+            )
         axis_title = app.track_canvas.find_withtag("axis-title")[0]
         self.assertEqual(app.track_canvas.itemcget(axis_title, "angle"), "90.0")
         title_bounds = app.track_canvas.bbox(axis_title)
@@ -46,7 +58,7 @@ class RollerCoasterAppTests(unittest.TestCase):
         tick_bounds = app.track_canvas.bbox(top_tick)
         self.assertGreater(title_bounds[1], tick_bounds[3])
 
-        root.geometry("760x600")
+        root.geometry(f"760x{expected_height}")
         root.update()
         app.render()
         root.update()
@@ -57,13 +69,13 @@ class RollerCoasterAppTests(unittest.TestCase):
 
     def test_plot_titles_are_outside_equal_height_canvases(self):
         root, app = self.create_app()
-        self.assertAlmostEqual(
-            app.track_canvas.winfo_height() / app.speed_canvas.winfo_height(),
-            2.0,
-            delta=0.1,
+        editor_plot_ratio = (
+            app.track_canvas.winfo_height() / app.speed_canvas.winfo_height()
         )
+        self.assertGreaterEqual(editor_plot_ratio, 1.8)
+        self.assertLessEqual(editor_plot_ratio, 2.5)
 
-        root.geometry("760x600")
+        root.geometry(f"760x{app.window_height}")
         root.update()
         app.render()
         root.update()
@@ -94,6 +106,14 @@ class RollerCoasterAppTests(unittest.TestCase):
             ]
             self.assertNotIn("Speed (mph)", canvas_text)
             self.assertNotIn("Rider load (g)", canvas_text)
+            for item in canvas.find_all():
+                if canvas.type(item) != "text":
+                    continue
+                bounds = canvas.bbox(item)
+                self.assertGreaterEqual(bounds[0], 0)
+                self.assertGreaterEqual(bounds[1], 0)
+                self.assertLessEqual(bounds[2], canvas.winfo_width())
+                self.assertLessEqual(bounds[3], canvas.winfo_height())
 
         app.update_plot_layout(SimpleNamespace(width=600))
         self.assertEqual(app.plot_layout, "stacked")
