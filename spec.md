@@ -57,11 +57,35 @@ The roller coaster simulator is a Tkinter desktop application rather than a brow
 ## Save feature
 
 - Place a menu tab labeled **File** in the top-left corner of the desktop window.
-- The **File** tab provides access to the save feature.
-- The save feature saves the current roller coaster track configuration, including control-point coordinates and the selected preset/custom state.
+- The **File** tab provides access to the file actions described below.
+- The save feature saves the current roller coaster track configuration, including control-point coordinates and the selected preset/custom state, in a versioned, documented JSON format.
 - Saving must preserve the editable track for reopening or later use.
 - Saving must park the car at the start and clear any active failure marker when the saved configuration is restored.
-- The save interaction and file format will be defined in a later implementation plan before coding begins.
+- Canceling a file dialog must leave the current track and ride state unchanged.
+- Invalid, unsupported, or malformed saved files must produce a clear error and leave the current track unchanged.
+
+## File actions
+
+- **New:** clear the saved-file state and reset to the Starter preset.
+- **Open:** show a file picker, load a valid saved track, park the car at the start, and clear any failure marker.
+- **Save:** write the current track to the current file; if no file is selected, use Save As.
+- **Save As:** show a file picker and write the current track to the selected file.
+- **Exit:** close the application after prompting if unsaved changes exist.
+- Track whether the app has unsaved changes. Replacing or closing the track after edits must offer Save, Don't Save, and Cancel choices.
+- A successful save or open must update the window title or status so the active file name is visible.
+- Provide standard keyboard shortcuts where available, including Ctrl+N, Ctrl+O, Ctrl+S, and Ctrl+Shift+S.
+
+## Validation
+
+- Verify the Starter valley at approximately 31.33 mph and 2.00 g.
+- Verify the Rollback hill at 40 m with 0.00 mph and a persistent failure marker while the car rolls back.
+- Verify the High-g valley stops at the first 4 g crossing and reports the reason, distance, speed, and rider load.
+- Verify the Low-g crest stops at approximately 24.17 m horizontally and -1.00 g.
+- Verify that Save then Open restores control-point coordinates, custom/preset state, and the parked car.
+- Verify that Save As creates a readable file and that subsequent Save updates that file.
+- Verify New, Open, and preset selection clear failure markers and reset the ride appropriately.
+- Verify canceling file dialogs, opening malformed files, and handling unavailable files do not corrupt the current track.
+- Verify unsaved-change prompts for Save, Don't Save, and Cancel.
 
 # Out of scope
 
