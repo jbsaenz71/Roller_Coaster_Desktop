@@ -13,3 +13,9 @@ Reported that no confirmation controls were available. Continued the implementat
 ## 2026-11-25
 
 Ran a complete validation test. All 6 unit tests passed, every Python file compiled, the Tkinter app launched successfully, and all preset calculations matched the spec.
+
+## 2026-11-25
+
+> In the prompts.md file, ensure that what I write to initiate changes is recorded. Keep what you have written and continue to write summaries of the changes you make
+
+Updated AGENTS.md so the repository records each change-initiating user request verbatim and also appends summaries of changes. Preserved all existing prompt history and updated prompts.md with this request.
