@@ -29,13 +29,13 @@ A 2D roller coaster simulator for students. Shape a track, release a car from re
 
 Open with the starter track visible and the car at the first point. Put the track editor above the plots, with the ride controls and live readouts beside the track on wide screens. On phones, stack the sections and make the control points large enough to drag by touch.
 
-## Mickey Mouse rider
+## Original rider
 
-- Display Mickey Mouse seated in the roller coaster car.
-- Keep Mickey visible throughout Ready, Ride, rollback, stop, and complete states.
-- Move Mickey with the car and keep the rider visually attached to the car in the side view.
+- Display an original robot passenger named Orbit seated in the roller coaster car.
+- Draw Orbit using simple in-app vector shapes: a teal helmet with a centered antenna, a single dark visor, and a compact violet suit. Do not use Mickey Mouse or third-party character artwork.
+- Keep Orbit visible throughout Ready, Ride, rollback, stop, and complete states.
+- Move Orbit with the car and keep the rider visually attached to the car in the side view.
 - Preserve the existing track editor, control-point editing, readouts, plots, and failure-marker behavior.
-- Any Mickey Mouse artwork added during implementation must be approved project artwork with appropriate rights and usage permissions.
 
 # Validation
 

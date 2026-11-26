@@ -436,11 +436,12 @@ class RollerCoasterApp:
             px = x_map(self.position.offset)
             py = y_map(self.position.height)
             canvas.create_rectangle(px - 10, py - 16, px + 10, py - 5,
-                                    fill="#ffbd74", outline="")
+                                    fill="#ffbd74", outline="", tags=("car",))
+            self.draw_orbit_rider(canvas, px, py)
             canvas.create_oval(px - 7, py - 7, px - 3, py - 3,
-                               fill="#f3f6fc", outline="")
+                               fill="#f3f6fc", outline="", tags=("car-wheel",))
             canvas.create_oval(px + 3, py - 7, px + 7, py - 3,
-                               fill="#f3f6fc", outline="")
+                               fill="#f3f6fc", outline="", tags=("car-wheel",))
 
         if self.failure:
             px = x_map(self.failure.offset)
@@ -450,6 +451,40 @@ class RollerCoasterApp:
             canvas.create_text(px + (12 if px < right - 80 else -12), py - 12,
                                text="Failure", anchor="w" if px < right - 80 else "e",
                                fill="#ffb5b5")
+
+    def draw_orbit_rider(self, canvas, x, y):
+        canvas.create_line(
+            x, y - 29, x, y - 34, fill="#56e4df", width=2,
+            tags=("rider", "rider-antenna"),
+        )
+        canvas.create_oval(
+            x - 2, y - 36, x + 2, y - 32, fill="#ffbd74", outline="",
+            tags=("rider", "rider-antenna"),
+        )
+        canvas.create_rectangle(
+            x - 5, y - 17, x + 5, y - 7, fill="#a78bfa",
+            outline="#d8caff", tags=("rider", "rider-suit"),
+        )
+        canvas.create_line(
+            x - 4, y - 14, x - 8, y - 10, fill="#a78bfa", width=3,
+            tags=("rider", "rider-suit"),
+        )
+        canvas.create_line(
+            x + 4, y - 14, x + 8, y - 10, fill="#a78bfa", width=3,
+            tags=("rider", "rider-suit"),
+        )
+        canvas.create_line(
+            x - 3, y - 12, x + 3, y - 12, fill="#ffbd74", width=2,
+            tags=("rider", "rider-suit"),
+        )
+        canvas.create_oval(
+            x - 7, y - 30, x + 7, y - 16, fill="#56e4df",
+            outline="#c1fbff", width=2, tags=("rider", "rider-head"),
+        )
+        canvas.create_oval(
+            x - 4, y - 25, x + 4, y - 20, fill="#182439",
+            outline="#bfcde2", tags=("rider", "rider-visor"),
+        )
 
     def draw_plot(self, canvas, field, title, y_limits):
         canvas.delete("all")

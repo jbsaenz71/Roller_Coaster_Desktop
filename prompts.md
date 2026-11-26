@@ -78,4 +78,4 @@ Implemented Stage 4 File actions and persistence: New, Open, Save, Save As, Exit
 
 > looking good. Let's build stage 5 and run another validation check
 
-Stage 5 is blocked because the repository contains no approved rider artwork. No Mickey Mouse art or rider implementation was created. Asked for authorized project artwork or permission to use a distinct original rider design.
+The repository contained no approved rider artwork, and the user selected `original_rider` instead of Mickey Mouse. Implemented Orbit, a distinct robot passenger drawn with in-app vector shapes, and updated the spec accordingly. No third-party character art was used. All 32 tests passed, modules compiled, and a live Tkinter smoke check verified the car advanced while Orbit stayed visually attached to it.

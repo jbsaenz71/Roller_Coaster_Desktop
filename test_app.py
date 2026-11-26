@@ -71,6 +71,33 @@ class RollerCoasterAppTests(unittest.TestCase):
         self.assertEqual(app.preset.get(), "Custom")
         self.assertEqual(str(app.add_point_button.cget("state")), "disabled")
 
+    def test_orbit_rider_is_drawn_and_moves_with_car(self):
+        root, app = self.create_app()
+        start_head = app.track_canvas.bbox("rider-head")
+        start_car = app.track_canvas.bbox("car")
+        self.assertIsNotNone(start_head)
+        self.assertIsNotNone(start_car)
+        self.assertGreater(len(app.track_canvas.find_withtag("rider")), 0)
+
+        app.position = app.profile["samples"][120]
+        app.render()
+        moved_head = app.track_canvas.bbox("rider-head")
+        car = app.track_canvas.bbox("car")
+
+        self.assertIsNotNone(moved_head)
+        self.assertIsNotNone(car)
+        self.assertGreater(moved_head[0], start_head[0])
+        self.assertAlmostEqual(
+            (moved_head[0] + moved_head[2]) / 2,
+            (car[0] + car[2]) / 2,
+        )
+        self.assertAlmostEqual(
+            (moved_head[1] + moved_head[3] - start_head[1] - start_head[3]) / 2,
+            (car[1] + car[3] - start_car[1] - start_car[3]) / 2,
+        )
+        self.assertGreater(len(app.track_canvas.find_withtag("rider-antenna")), 0)
+        self.assertGreater(len(app.track_canvas.find_withtag("rider-visor")), 0)
+
     def test_preset_replaces_track_and_resets_ride(self):
         root, app = self.create_app()
         app.points[1] = [19.0, 1.0]
@@ -119,18 +146,21 @@ class RollerCoasterAppTests(unittest.TestCase):
             app.start_ride()
             self.assertEqual(app.status_label.cget("text"), "Riding")
             self.assertEqual(str(app.ride_button.cget("state")), "disabled")
+            self.assertGreater(len(app.track_canvas.find_withtag("rider")), 0)
 
             callbacks.pop(0)()
             clock[0] += 0.25
             callbacks.pop(0)()
             self.assertGreater(app.position.offset, 0)
             self.assertGreater(app.position.speed_mph, 0)
+            self.assertGreater(len(app.track_canvas.find_withtag("rider")), 0)
 
             clock[0] = 100.0 + stop_time + 0.1
             callbacks.pop(0)()
 
         self.assertEqual(str(app.ride_button.cget("state")), "normal")
         self.assertIsNone(app.animation_id)
+        self.assertGreater(len(app.track_canvas.find_withtag("rider")), 0)
         return app
 
     def test_starter_ride_animates_and_completes(self):
