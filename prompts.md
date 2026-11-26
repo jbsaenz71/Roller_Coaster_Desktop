@@ -95,3 +95,9 @@ Implemented and validated Stage 6 by adding exact Starter parabola, rollback-tur
 Running the final implementation gate with the complete test suite, Python compilation, app-level Tkinter smoke coverage, preset value comparison, Git history verification, and a clean working-tree check.
 
 Stage 7 validation passed all 34 tests and all Python compilation checks. Verified Starter at 31.33 mph and 2.00 g, Rollback at 40.00 m and 0.00 mph, High-g at the 4.00 g crossing near 8.00 m, and Low-g at 24.17 m horizontally, 26.42 m along the track, 26.33 mph, and -1.00 g.
+
+## 2026-11-26
+
+> Good. Run another validation check to ensure all functions of the app are working.
+
+Ran an additional full validation of the Tkinter app: all 34 unit and integration tests passed, every Python module compiled, and an offscreen app smoke launch initialized the Starter track, Ready state, both plots and track canvas, and Orbit's rider shapes. The working application functions cover track editing, presets, ride outcomes, rollback, Reset, file actions, save/load persistence, unsaved changes, and rider rendering.
