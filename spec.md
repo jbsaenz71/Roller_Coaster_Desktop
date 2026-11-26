@@ -2,8 +2,6 @@
 
 A 2D roller coaster simulator for students. Shape a track, release a car from rest at the top of the first hill, and see how speed and rider g-force change during the ride.
 
-# Platform
-
 # Inputs
 
 - Drag the control points on a side-view grid to shape the track. Point coordinates are horizontal distance (x) from 0 to 200 m and height (h) from 0 to 60 m. Keep the points in left-to-right order with at least 1 m between them. The first point starts the ride and must be higher than the second point.

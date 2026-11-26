@@ -25,3 +25,5 @@ Updated AGENTS.md so the repository records each change-initiating user request 
 > Now put that plan you made under the # Platform section in the spec.md file so that I can review it.
 
 Added a `# Platform` section to spec.md with the Tkinter desktop implementation plan and the top-left `File` tab save-feature requirements. No application code or implementation behavior was changed.
+
+Removed a duplicate bare `# Platform` heading so the specification contains only the detailed Platform section.
