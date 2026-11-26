@@ -101,3 +101,13 @@ Stage 7 validation passed all 34 tests and all Python compilation checks. Verifi
 > Good. Run another validation check to ensure all functions of the app are working.
 
 Ran an additional full validation of the Tkinter app: all 34 unit and integration tests passed, every Python module compiled, and an offscreen app smoke launch initialized the Starter track, Ready state, both plots and track canvas, and Orbit's rider shapes. The working application functions cover track editing, presets, ride outcomes, rollback, Reset, file actions, save/load persistence, unsaved changes, and rider rendering.
+
+## 2026-11-26
+
+> The app is working great, but I am noticing one thing. Do you notice how the labels here are very crammed together? Could you provide a fix for that? Don't build anything.
+
+Identified that the horizontal "Height (m)" caption overlaps the top "60" y-axis tick; recommended rotating and vertically centering the caption in the left margin. No code was changed in response to that suggestion request.
+
+> Let's do it.
+
+Rotated and centered the track height-axis caption in the left margin, and added a regression assertion that it stays clear of the top y-axis tick.

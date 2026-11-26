@@ -423,8 +423,14 @@ class RollerCoasterApp:
         canvas.create_text((left + right) / 2, height - 5,
                            text="Horizontal distance (m)", anchor="s",
                            fill="#bfcde2", tags="axis-label")
-        canvas.create_text(8, top, text="Height (m)", anchor="nw",
-                           fill="#bfcde2", tags="axis-label")
+        canvas.create_text(
+            12,
+            (top + bottom) / 2,
+            text="Height (m)",
+            angle=90,
+            fill="#bfcde2",
+            tags=("axis-label", "axis-title"),
+        )
         canvas.create_line(*self.hermite_points(), fill="#56e4df", width=4, smooth=False)
 
         for x, h in self.points:

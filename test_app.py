@@ -34,6 +34,16 @@ class RollerCoasterAppTests(unittest.TestCase):
         self.assertGreater(len(app.load_canvas.find_all()), 0)
         self.assertGreater(len(app.track_canvas.find_withtag("grid")), 0)
         self.assertGreater(len(app.track_canvas.find_withtag("axis-label")), 0)
+        axis_title = app.track_canvas.find_withtag("axis-title")[0]
+        self.assertEqual(app.track_canvas.itemcget(axis_title, "angle"), "90.0")
+        title_bounds = app.track_canvas.bbox(axis_title)
+        top_tick = next(
+            item
+            for item in app.track_canvas.find_withtag("axis-label")
+            if app.track_canvas.itemcget(item, "text") == "60"
+        )
+        tick_bounds = app.track_canvas.bbox(top_tick)
+        self.assertGreater(title_bounds[1], tick_bounds[3])
 
         root.geometry("760x620")
         root.update()
