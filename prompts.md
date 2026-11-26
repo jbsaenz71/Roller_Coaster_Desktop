@@ -73,3 +73,9 @@ Added deterministic Tkinter animation tests for Starter completion, rollback, hi
 > Great. Build stage 4 and do another validation check.
 
 Implemented Stage 4 File actions and persistence: New, Open, Save, Save As, Exit, unsaved-change prompts, keyboard shortcuts, active-file/dirty title state, and versioned JSON validation. Documented the version 1 JSON schema in spec.md. Added focused round-trip, cancellation, malformed-file, save-error, reset-on-open, and current-file update tests. All 31 tests passed, all modules compiled, and an independent save/load round trip plus unsupported-version rejection check passed.
+
+## 2026-11-25
+
+> looking good. Let's build stage 5 and run another validation check
+
+Stage 5 is blocked because the repository contains no approved rider artwork. No Mickey Mouse art or rider implementation was created. Asked for authorized project artwork or permission to use a distinct original rider design.
