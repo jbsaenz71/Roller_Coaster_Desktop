@@ -39,3 +39,9 @@ Suggested improvements to the plan: define a versioned, documented JSON save for
 > Let's include Validation and File actions. Add it the spec under the # Platform section. Don't build anything.
 
 Added detailed File actions and Validation sections under `# Platform` in spec.md. Documented New, Open, Save, Save As, Exit, unsaved-change prompts, keyboard shortcuts, save-format requirements, preset outcomes, save/load round trips, malformed-file handling, and validation checks. No application code was changed.
+
+## 2026-11-25
+
+> Now add the plan to the # Look and feel section of spec.md.
+
+Added the Mickey Mouse rider plan under `# Look and feel` in spec.md. Documented the character as seated in the car, continuously visible across ride states, visually attached during motion, and dependent on approved project artwork with appropriate rights. No application code or artwork was changed.

@@ -29,6 +29,14 @@ A 2D roller coaster simulator for students. Shape a track, release a car from re
 
 Open with the starter track visible and the car at the first point. Put the track editor above the plots, with the ride controls and live readouts beside the track on wide screens. On phones, stack the sections and make the control points large enough to drag by touch.
 
+## Mickey Mouse rider
+
+- Display Mickey Mouse seated in the roller coaster car.
+- Keep Mickey visible throughout Ready, Ride, rollback, stop, and complete states.
+- Move Mickey with the car and keep the rider visually attached to the car in the side view.
+- Preserve the existing track editor, control-point editing, readouts, plots, and failure-marker behavior.
+- Any Mickey Mouse artwork added during implementation must be approved project artwork with appropriate rights and usage permissions.
+
 # Validation
 
 Use the default points ((0,10)), ((20,0)), and ((30,2.5)) in meters. They lie on (h=(x-20)^2/40) when coordinates are expressed in meters, so the interpolation reproduces that parabola. At (x=20 mathrm{m}), the tangent is horizontal and the curvature is (1/20 mathrm{m^{-1}}), giving a valley radius of (20 mathrm{m}).
