@@ -218,3 +218,9 @@ n=\cos\theta+\frac{v^2\kappa}{g}
 \]
 
 The implementation reports 31.3331 mph and 2.0000 g at the Starter valley, matching the hand calculation (31.33 mph and 2.00 g).
+
+## 2026-11-26
+
+> I added README.md. Could you explain to a user how to use it? Write it down in README.md
+
+Created `README.md` with instructions for starting the desktop app, editing tracks, choosing presets, running rides, understanding readouts and failures, and saving/opening tracks.
